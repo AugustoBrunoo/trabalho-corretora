@@ -6,6 +6,7 @@ const mercadoRoutes = require('./routes/mercadoRoutes');
 const carteiraRoutes = require('./routes/carteiraRoutes');
 const precosService = require('./services/precosService');
 const authRoutes = require('./routes/authRoutes');
+const ordemRoutes = require('./routes/ordemRoutes');
 
 const app = express();
 
@@ -17,6 +18,7 @@ app.use('/api/conta', contaRoutes);
 app.use('/api/mercado', mercadoRoutes); 
 app.use('/api/auth', authRoutes);
 app.use('/api/carteira', carteiraRoutes);
+app.use('/api/ordem', ordemRoutes);
 
 const PORTA = 3000;
 app.listen(PORTA, () => {
