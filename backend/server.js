@@ -3,6 +3,7 @@ const cors = require('cors');
 
 const contaRoutes = require('./routes/contaRoutes');
 const mercadoRoutes = require('./routes/mercadoRoutes');
+const carteiraRoutes = require('./routes/carteiraRoutes');
 const precosService = require('./services/precosService');
 const authRoutes = require('./routes/authRoutes');
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use('/api/conta', contaRoutes);
 app.use('/api/mercado', mercadoRoutes); 
 app.use('/api/auth', authRoutes);
+app.use('/api/carteira', carteiraRoutes);
 
 const PORTA = 3000;
 app.listen(PORTA, () => {
