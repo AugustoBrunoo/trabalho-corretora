@@ -18,7 +18,7 @@ app.use('/api/conta', contaRoutes);
 app.use('/api/mercado', mercadoRoutes); 
 app.use('/api/auth', authRoutes);
 app.use('/api/carteira', carteiraRoutes);
-app.use('/api/ordem', ordemRoutes);
+app.use('/api/ordens', ordemRoutes);
 
 const PORTA = 3000;
 app.listen(PORTA, () => {
