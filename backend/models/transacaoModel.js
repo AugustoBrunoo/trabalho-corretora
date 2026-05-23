@@ -15,6 +15,11 @@ const registrarTransacao = (tipo, valor, descricao) => {
     return novaTransacao;
 };
 
+const obterTransacoes = () => {
+    return tabelaTransacoes;
+};
+
 module.exports = {
-    registrarTransacao
+    registrarTransacao,
+    obterTransacoes
 };
