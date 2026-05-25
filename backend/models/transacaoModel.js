@@ -1,25 +1,11 @@
-const tabelaTransacoes = []; 
+const mongoose = require('mongoose');
 
-const registrarTransacao = (tipo, valor, descricao) => {
-    const novaTransacao = {
-        id: Date.now(), // Gera um número único
-        tipo: tipo,
-        valor: valor,
-        descricao: descricao,
-        data: new Date() // Depois vamos trocar isso pelo relógio simulado do trabalho
-    };
-    
-    // "Salva" no banco de dados (nosso array)
-    tabelaTransacoes.push(novaTransacao);
-    
-    return novaTransacao;
-};
-
-const obterTransacoes = () => {
-    return tabelaTransacoes;
-};
-
-module.exports = {
-    registrarTransacao,
-    obterTransacoes
-};
+const transacaoSchema = new mongoose.Schema({
+    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
+    tipo: { type: String, enum: ['deposito', 'retirada'], required: true },
+    valor: { type: Number, required: true },
+    descricao: { type: String, required: true },
+    minutoSimulacao: { type: Number, required: true },
+    saldoResultante: { type: Number, required: true }
+}, { timestamps: true }); 
+module.exports = mongoose.model('Transacao', transacaoSchema);

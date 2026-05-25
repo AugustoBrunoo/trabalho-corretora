@@ -1,40 +1,16 @@
-const tabelaUsuarios = []; 
+const mongoose = require('mongoose');
 
-const buscarPorEmail = (email) => {
-    return tabelaUsuarios.find(u => u.email === email);
-};
+const usuarioSchema = new mongoose.Schema({
+    nome: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    senha: { type: String, required: true },
+    falhasLogin: { type: Number, default: 0 },
+    saldoGeral: { type: Number, default: 0 },
+    minutoAtual: { type: Number, default: 0 },
+    tokenSenha: { type: String, default: null },
+    dataTokenSenha: { type: Date, default: null }
+}, { 
+    timestamps: true // Cria automaticamente os campos createdAt e updatedAt (dataRegistro e dataAtualizacao)
+});
 
-const buscarPorId = (id) => {
-    return tabelaUsuarios.find(u => u.id === id);
-};
-
-const criarUsuario = (dadosDoUsuario) => {
-    const novoUsuario = {
-        id: Date.now(),
-        dataRegistro: new Date(),
-        dataAtualizacao: new Date(),
-        falhasLogin: 0,
-        saldoGeral: 0,
-        tokenSenha: null,      // Armazena o token de recuperação 
-        dataTokenSenha: null,  // Armazena quando o token foi criado para checar o vencimento
-        ...dadosDoUsuario
-    };
-    tabelaUsuarios.push(novoUsuario);
-    return novoUsuario;
-};
-
-const atualizarUsuario = (usuarioAtualizado) => {
-    const index = tabelaUsuarios.findIndex(u => u.id === usuarioAtualizado.id);
-    if (index !== -1) {
-        tabelaUsuarios[index] = usuarioAtualizado;
-        return true;
-    }
-    return false;
-};
-
-module.exports = {
-    buscarPorEmail,
-    buscarPorId,
-    criarUsuario,
-    atualizarUsuario
-};
+module.exports = mongoose.model('Usuario', usuarioSchema);

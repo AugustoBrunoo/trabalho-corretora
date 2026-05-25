@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const mongoose = require('mongoose'); 
+require('dotenv').config(); 
 
 const contaRoutes = require('./routes/contaRoutes');
 const mercadoRoutes = require('./routes/mercadoRoutes');
@@ -20,7 +22,19 @@ app.use('/api/auth', authRoutes);
 app.use('/api/carteira', carteiraRoutes);
 app.use('/api/ordens', ordemRoutes);
 
-const PORTA = 3000;
-app.listen(PORTA, () => {
-    console.log(`OK. Servidor rodando na porta ${PORTA}`);
-});
+// Configuração da Porta (Usa a do .env ou assume a 3000 por padrão)
+const PORTA = process.env.PORT;
+
+// Conexão com o MongoDB usando a sua variável MONGO_URL
+mongoose.connect(process.env.MONGO_URL)
+    .then(() => {
+        console.log(' Banco de dados MongoDB conectado com sucesso!');
+        
+        // O servidor só começa a rodar depois que o banco de dados estiver conectado
+        app.listen(PORTA, () => {
+            console.log(`OK. Servidor rodando na porta ${PORTA}`);
+        });
+    })
+    .catch((erro) => {
+        console.error(' Erro crítico ao conectar no MongoDB:', erro);
+    });

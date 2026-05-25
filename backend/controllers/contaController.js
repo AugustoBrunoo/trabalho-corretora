@@ -1,74 +1,144 @@
-const transacaoModel = require('../models/transacaoModel');
+const Transacao = require('../models/transacaoModel'); 
+const Usuario = require('../models/usuarioModel');
+const auth = require('../auth/auth');
 
-const depositar = (req, res) => {
-    const { valor, descricao } = req.body; 
+// Lógica para depositar
+const depositar = async (req, res) => {
+    try {
+        // Identifica o usuário logado pelo Token JWT
+        const claims = auth.verifyToken(req, res);
+        if (!claims) return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
+        
+        const userId = claims.user_id;
+        const { valor, descricao } = req.body; 
 
-    if (!valor || valor <= 0) {
-        return res.status(400).json({ erro: "O valor do depósito deve ser maior que zero." });
-    }
+        if (!valor || isNaN(valor) || valor <= 0) {
+            return res.status(400).json({ erro: "O valor do depósito deve ser um número maior que zero." });
+        }
+        if (!descricao || descricao.trim() === "") {
+            return res.status(400).json({ erro: "A descrição do depósito é obrigatória." });
+        }
 
-    const novaTransacao = transacaoModel.registrarTransacao("deposito", valor, descricao);
+        // Busca o usuário no banco de dados
+        const usuario = await Usuario.findById(userId);
+        if (!usuario) {
+            return res.status(404).json({ erro: "Usuário não encontrado." });
+        }
 
-    return res.status(200).json({
-        mensagem: "Depósito realizado com sucesso!",
-        transacao: novaTransacao
-    });
-};
+        // Atualiza o saldo geral do usuário
+        usuario.saldoGeral += Number(valor);
+        await usuario.save();
 
-const retirar = (req, res) => {
-    const { valor, descricao } = req.body;
-
-    if (!valor || valor <= 0) {
-        return res.status(400).json({ erro: "O valor da retirada deve ser maior que zero." });
-    }
-
-    // Pega todas as transações para calcularmos o saldo atual
-    const transacoes = transacaoModel.obterTransacoes();
-    
-    let saldo = 0;
-    transacoes.forEach(t => {
-        if (t.tipo === "deposito") saldo += t.valor;
-        if (t.tipo === "retirada") saldo -= t.valor;
-    });
-
-    // Verifica se o usuário tem dinheiro suficiente
-    if (valor > saldo) {
-        return res.status(400).json({ 
-            erro: "Saldo insuficiente para esta retirada.", 
-            saldoAtual: saldo 
+        // Registra o histórico da transação com o saldo resultante e o minuto da simulação
+        const novaTransacao = await Transacao.create({
+            usuario: userId,
+            tipo: 'deposito',
+            valor: Number(valor),
+            descricao: descricao.trim(),
+            minutoSimulacao: usuario.minutoAtual, // Pega o minuto do relógio desse usuário
+            saldoResultante: usuario.saldoGeral   // Saldo histórico após o depósito
         });
+
+        return res.status(200).json({
+            mensagem: "Depósito realizado com sucesso!",
+            transacao: novaTransacao,
+            saldoAtual: usuario.saldoGeral
+        });
+
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao processar o depósito.", detalhe: erro.message });
     }
-
-    // Se passou pela verificação, registra a retirada
-    const novaTransacao = transacaoModel.registrarTransacao("retirada", valor, descricao);
-
-    return res.status(200).json({
-        mensagem: "Retirada realizada com sucesso!",
-        transacao: novaTransacao,
-        saldoRestante: saldo - valor
-    });
 };
 
-const listarTransacoes = (req, res) => {
-    // Busca todas as transações salvas no Model
-    const transacoes = transacaoModel.obterTransacoes();
+// Lógica de retirada (saque)
+const retirar = async (req, res) => {
+    try {
+        // Identifica o usuário logado pelo Token JWT
+        const claims = auth.verifyToken(req, res);
+        if (!claims) return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
+        
+        const userId = claims.user_id;
+        const { valor, descricao } = req.body;
 
-    // calculamos o saldo atual para mandar para o Frontend
-    let saldo = 0;
-    transacoes.forEach(t => {
-        if (t.tipo === "deposito") saldo += t.valor;
-        if (t.tipo === "retirada") saldo -= t.valor;
-    });
+        if (!valor || isNaN(valor) || valor <= 0) {
+            return res.status(400).json({ erro: "O valor da retirada deve ser um número maior que zero." });
+        }
+        if (!descricao || descricao.trim() === "") {
+            return res.status(400).json({ erro: "A descrição do retirada é obrigatória." });
+        }
 
-    // Devolvemos o extrato completo e o saldo final 
-    return res.status(200).json({
-        saldoAtual: saldo,
-        historico: transacoes
-    });
+        // Busca o usuário no banco de dados
+        const usuario = await Usuario.findById(userId);
+        if (!usuario) {
+            return res.status(404).json({ erro: "Usuário não encontrado." });
+        }
+
+        // Verifica se o usuário tem saldo suficiente no banco de dados
+        if (Number(valor) > usuario.saldoGeral) {
+            return res.status(400).json({ 
+                erro: "Saldo insuficiente para esta retirada.", 
+                saldoAtual: usuario.saldoGeral 
+            });
+        }
+
+        // Reduz o valor do saldo do usuário
+        usuario.saldoGeral -= Number(valor);
+        await usuario.save();
+
+        // Registra o histórico da retirada
+        const novaTransacao = await Transacao.create({
+            usuario: userId,
+            tipo: 'retirada',
+            valor: Number(valor),
+            descricao: descricao.trim(),
+            minutoSimulacao: usuario.minutoAtual,
+            saldoResultante: usuario.saldoGeral
+        });
+
+        return res.status(200).json({
+            mensagem: "Retirada realizada com sucesso!",
+            transacao: novaTransacao,
+            saldoRestante: usuario.saldoGeral
+        });
+
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao processar a retirada.", detalhe: erro.message });
+    }
+};
+
+// Listar transações e saldo do usuário
+const listarTransacoes = async (req, res) => {
+    try {
+        // Identifica o usuário logado pelo Token JWT
+        const claims = auth.verifyToken(req, res);
+        if (!claims) {
+            return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
+        }
+        const userId = claims.user_id;
+
+        // Busca o usuário para devolver o saldo consolidado atual
+        const usuario = await Usuario.findById(userId);
+        //  Validação preventiva de existência do usuário antes do mapeamento de propriedades
+        if (!usuario) {
+            return res.status(404).json({ erro: "Usuário não encontrado na base de dados." });
+        }
+
+        // Busca todas as transações daquele usuário específico em ordem cronológica de inserção
+        const transacoes = await Transacao.find({ usuario: userId }).sort({ createdAt: 1 });
+
+        return res.status(200).json({
+            saldoAtual: usuario.saldoGeral,
+            minutoAtual: usuario.minutoAtual,
+            transacoes: transacoes
+        });
+
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao buscar extrato de transações.", detalhe: erro.message });
+    }
 };
 
 module.exports = {
     depositar,
-    retirar,
+    retirada: retirar, 
     listarTransacoes
 };

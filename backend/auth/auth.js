@@ -1,12 +1,9 @@
 // auth/auth.js
 const jwt = require("jsonwebtoken");
 
-// Importamos a chave secreta que vamos centralizar no Controller por enquanto
-const authController = require('../controllers/authController');
+const TOKEN_KEY = process.env.TOKEN_KEY;
 
-//
 // Recupera as "claims" de um token JWT (Padrão do Professor)
-//
 const verifyToken = function (req, res) {
     if (!req.headers) {
         return null;

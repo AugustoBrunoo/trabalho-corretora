@@ -1,30 +1,43 @@
-const carteiraModel = require('../models/carteiraModel');
-const mercadoModel = require('../models/mercadoModel'); 
+const Carteira = require('../models/carteiraModel');
+const Usuario = require('../models/usuarioModel'); // [INCLUÍDO] para buscar o tempo e saldo real do usuário
 const precosService = require('../services/precosService'); 
+const auth = require('../auth/auth');
 
 const consultarCarteira = async (req, res) => {
     try {
-        // Pega nas ações que o utilizador possui
-        const ativos = carteiraModel.obterCarteira();
+        // Identifica o utilizador logado pelo Token JWT
+        const claims = auth.verifyToken(req, res);
+        if (!claims) {
+            return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
+        }
+        const userId = claims.user_id;
         
-        //  Pega no minuto atual do simulador
-        const minutoAtual = mercadoModel.obterTempo();
+        //Busca o usuário no banco para capturar o minutoAtual e o saldoGeral persistidos individualmente
+        const usuario = await Usuario.findById(userId);
+        if (!usuario) {
+            return res.status(404).json({ erro: "Usuário não encontrado." });
+        }
 
-        //  Vai buscar os preços atualizados à API do professor
+        const minutoAtual = usuario.minutoAtual;
+        
+        // Pega as ações que o utilizador possui guardadas no MongoDB
+        const ativos = await Carteira.find({ usuario: userId });
+        
+        // Vai buscar os preços atualizados à API do professor usando o minuto real do usuário
         const todosOsPrecos = await precosService.obterPrecosPorMinuto(minutoAtual);
 
         let valorTotalInvestidoCarteira = 0;
         let valorTotalAtualCarteira = 0;
 
-        //  junta a quantidade que o utilizador tem com o preço de agora
+        // Junta a quantidade que o utilizador tem com o preço de agora e calcula os rendimentos
         const carteiraComCalculos = ativos.map(ativo => {
-            // Procura o preço atual desta ação específica
-            const cotacao = todosOsPrecos.find(p => p.ticker === ativo.ticker);
+            // Procura o preço atual desta ação específica na API do professor
+            const cotacao = todosOsPrecos.find(p => p.ticker === ativo.ticker.toUpperCase());
             
-            // Se por algum motivo não achar a cotação, usa o preço médio como segurança
-            const precoAtual = cotacao ? cotacao.currentPrice || cotacao.preco : ativo.precoMedio; 
+            // Se por algum motivo não achar a cotação na API, usa o preço médio como segurança
+            const precoAtual = cotacao ? (cotacao.currentPrice || cotacao.preco) : ativo.precoMedio; 
 
-            // calculo de investimentos
+            // Cálculo dos investimentos individuais
             const valorInvestido = ativo.quantidade * ativo.precoMedio;
             const valorAtual = ativo.quantidade * precoAtual;
             const lucroOuPrejuizo = valorAtual - valorInvestido;
@@ -36,18 +49,21 @@ const consultarCarteira = async (req, res) => {
             return {
                 ticker: ativo.ticker,
                 quantidade: ativo.quantidade,
-                precoMedio: ativo.precoMedio.toFixed(2),
-                precoAtual: precoAtual,
+                precoMedio: Number(ativo.precoMedio).toFixed(2),
+                precoAtual: Number(precoAtual).toFixed(2),
                 valorTotalAtual: valorAtual.toFixed(2),
                 resultado: lucroOuPrejuizo.toFixed(2)
             };
         });
 
+        // Retorna o resumo completo, formatado e sincronizado com o banco para o Frontend
         return res.status(200).json({
             minutoReferencia: minutoAtual,
+            saldoDisponivel: usuario.saldoGeral.toFixed(2),
             resumo: {
                 totalInvestido: valorTotalInvestidoCarteira.toFixed(2),
-                patrimonioAtual: valorTotalAtualCarteira.toFixed(2),
+                patrimonioAtivos: valorTotalAtualCarteira.toFixed(2),
+                patrimonioTotal: (usuario.saldoGeral + valorTotalAtualCarteira).toFixed(2), 
                 lucroPrejuizoTotal: (valorTotalAtualCarteira - valorTotalInvestidoCarteira).toFixed(2)
             },
             ativos: carteiraComCalculos
@@ -56,7 +72,7 @@ const consultarCarteira = async (req, res) => {
     } catch (erro) {
         return res.status(500).json({ 
             erro: "Erro ao calcular os dados da carteira.",
-            detalhe: erro.message 
+            dethe: erro.message 
         });
     }
 };

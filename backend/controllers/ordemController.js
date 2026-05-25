@@ -1,131 +1,234 @@
-const ordemModel = require('../models/ordemModel');
-const carteiraModel = require('../models/carteiraModel');
-const mercadoModel = require('../models/mercadoModel');
+const Ordem = require('../models/ordemModel');
+const Carteira = require('../models/carteiraModel');
+const Usuario = require('../models/usuarioModel');
+const Transacao = require('../models/transacaoModel');
 const precosService = require('../services/precosService');
-const transacaoModel = require('../models/transacaoModel');
-
-// Função auxiliar para calcular o saldo real do usuário baseado no histórico
-const obterSaldoAtual = () => {
-    const transacoes = transacaoModel.obterTransacoes();
-    let saldo = 0;
-    transacoes.forEach(t => {
-        if (t.tipo === "deposito") saldo += t.valor;
-        if (t.tipo === "retirada") saldo -= t.valor;
-    });
-    return saldo;
-};
+const auth = require('../auth/auth');
 
 const processarOrdem = async (req, res) => {
-    const { usuario, ticker, quantidade, tipoOrdem, tipoExecucao, precoReferencia } = req.body;
-    const minutoAtual = mercadoModel.obterTempo();
+    try {
+        // Identifica o usuário logado pelo Token JWT
+        const claims = auth.verifyToken(req, res);
+        if (!claims) {
+            return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
+        }
+        const userId = claims.user_id;
 
-    // Verifica se tem campo obrigatório vazio
-    if (!ticker || !quantidade || !tipoOrdem || !tipoExecucao) {
-        return res.status(400).json({ erro: "Campos obrigatórios ausentes." });
-    }
+        const { ticker, quantidade, tipoOrdem, tipoExecucao, precoReferencia } = req.body;
 
-    if (tipoExecucao === 'mercado') {
-        try {
-            //  Busca o preço real do ativo no minuto atual do sistema
+        // Verifica se tem campo obrigatório vazio
+        if (!ticker || !quantidade || quantidade <= 0 || !tipoOrdem || !tipoExecucao) {
+            return res.status(400).json({ erro: "Campos obrigatórios ausentes ou quantidade inválida." });
+        }
+
+        // Busca o usuário no banco de dados para validar saldos e CAPTURAR O MINUTO REAL DELE
+        const usuario = await Usuario.findById(userId);
+        if (!usuario) {
+            return res.status(404).json({ erro: "Usuário não encontrado." });
+        }
+
+        // O tempo agora é individualizado e persistido por investidor
+        const minutoAtual = usuario.minutoAtual;
+
+        // LÓGICA PARA ORDENS A MERCADO
+        if (tipoExecucao === 'mercado') {
             const precos = await precosService.obterPrecosPorMinuto(minutoAtual);
             const cotacao = precos.find(p => p.ticker === ticker.toUpperCase());
             
             if (!cotacao) {
-                return res.status(404).json({ erro: `Ação ${ticker} não encontrada no mercado para o minuto ${minutoAtual}.` });
+                return res.status(404).json({ erro: `Ação ${ticker.toUpperCase()} não encontrada no mercado para o minuto ${minutoAtual}.` });
             }
             
             const precoAtual = cotacao.currentPrice || cotacao.preco;
             const valorTotalOrdem = precoAtual * quantidade;
 
-            // Lógica de compra
+            // sub-lógica de compra a mercado
             if (tipoOrdem === 'compra') {
-                const saldoDisponivel = obterSaldoAtual();
-                if (saldoDisponivel < valorTotalOrdem) {
+                if (usuario.saldoGeral < valorTotalOrdem) {
                     return res.status(400).json({ 
                         erro: "Saldo insuficiente para realizar a compra.", 
-                        saldoAtual: saldoDisponivel, 
+                        saldoAtual: usuario.saldoGeral, 
                         custoNecessario: valorTotalOrdem 
                     });
                 }
 
-                // Debita o valor da conta corrente do usuário
-                transacaoModel.registrarTransacao("retirada", valorTotalOrdem, `Compra de ${quantidade} ações de ${ticker.toUpperCase()}`);
-                // Adiciona o ativo na carteira 
-                carteiraModel.adicionarAtivo(ticker.toUpperCase(), quantidade, precoAtual);
+                // Deduz o saldo do usuário
+                usuario.saldoGeral -= valorTotalOrdem;
+                await usuario.save();
+
+                // grava fotografia do saldo resultante e o minuto da simulação
+                await Transacao.create({
+                    usuario: userId,
+                    tipo: "retirada",
+                    valor: valorTotalOrdem,
+                    minutoSimulacao: minutoAtual,
+                    saldoResultante: usuario.saldoGeral,
+                    descricao: `Compra a mercado de ${quantidade} ações de ${ticker.toUpperCase()}`
+                });
+
+                // Atualiza ou adiciona o ativo na Carteira do Usuário
+                let ativoNaCarteira = await Carteira.findOne({ usuario: userId, ticker: ticker.toUpperCase() });
                 
-                const ordemSalva = ordemModel.criarOrdem({
-                    usuario, minutoRegistro: minutoAtual, minutoExecucao: minutoAtual,
-                    tipoOrdem: 'compra', ticker, quantidade, tipoExecucao,
+                if (ativoNaCarteira) {
+                    const novaQuantidade = ativoNaCarteira.quantidade + quantidade;
+                    const novoPrecoMedio = ((ativoNaCarteira.precoMedio * ativoNaCarteira.quantidade) + (precoAtual * quantidade)) / novaQuantidade;
+                    
+                    ativoNaCarteira.quantidade = novaQuantidade;
+                    ativoNaCarteira.precoMedio = novoPrecoMedio;
+                    await ativoNaCarteira.save();
+                } else {
+                    await Carteira.create({
+                        usuario: userId,
+                        ticker: ticker.toUpperCase(),
+                        quantidade: quantidade,
+                        precoMedio: precoAtual
+                    });
+                }
+                
+                // Salva o registro da Ordem Executada no banco
+                const ordemSalva = await Ordem.create({
+                    usuario: userId, minutoRegistro: minutoAtual, minutoExecucao: minutoAtual,
+                    tipoOrdem: 'compra', ticker: ticker.toUpperCase(), quantidade, tipoExecucao,
                     precoReferencia: precoAtual, status: 'executada'
                 });
 
-                return res.status(200).json({ mensagem: "Ordem de compra a mercado executada!", ordem: ordemSalva });
+                return res.status(200).json({ mensagem: "Ordem de compra a mercado executada com sucesso!", ordem: ordemSalva });
             } 
             
-            // Lógica de venda
+            // sub-lógica de venda a mercado
             else if (tipoOrdem === 'venda') {
-                const carteira = carteiraModel.obterCarteira();
-                const ativoNaCarteira = carteira.find(a => a.ticker === ticker.toUpperCase());
+                const ativoNaCarteira = await Carteira.findOne({ usuario: userId, ticker: ticker.toUpperCase() });
 
                 if (!ativoNaCarteira || ativoNaCarteira.quantidade < quantidade) {
                     return res.status(400).json({ erro: "Você não possui quantidade suficiente desta ação para vender." });
                 }
 
-                // Registra o dinheiro da venda entrando na conta corrente 
-                transacaoModel.registrarTransacao("deposito", valorTotalOrdem, `Venda de ${quantidade} ações de ${ticker.toUpperCase()}`);
-                // diminui as ações da carteira
-                carteiraModel.adicionarAtivo(ticker.toUpperCase(), -quantidade, precoAtual); 
+                // Incrementa o dinheiro na conta do usuário
+                usuario.saldoGeral += valorTotalOrdem;
+                await usuario.save();
 
-                const ordemSalva = ordemModel.criarOrdem({
-                    usuario, minutoRegistro: minutoAtual, minutoExecucao: minutoAtual,
-                    tipoOrdem: 'venda', ticker, quantidade, tipoExecucao,
+                // grava o saldo resultante e o minuto correto do usuário
+                await Transacao.create({
+                    usuario: userId,
+                    tipo: "deposito",
+                    valor: valorTotalOrdem,
+                    minutoSimulacao: minutoAtual,
+                    saldoResultante: usuario.saldoGeral,
+                    descricao: `Venda a mercado de ${quantidade} ações de ${ticker.toUpperCase()}`
+                });
+
+                // Atualiza a quantidade de ações na carteira
+                ativoNaCarteira.quantidade -= quantidade;
+                if (ativoNaCarteira.quantidade === 0) {
+                    await Carteira.deleteOne({ _id: ativoNaCarteira._id });
+                } else {
+                    await ativoNaCarteira.save();
+                }
+
+                // Salva o registro da Ordem Executada no banco
+                const ordemSalva = await Ordem.create({
+                    usuario: userId, minutoRegistro: minutoAtual, minutoExecucao: minutoAtual,
+                    tipoOrdem: 'venda', ticker: ticker.toUpperCase(), quantidade, tipoExecucao,
                     precoReferencia: precoAtual, status: 'executada'
                 });
 
-                return res.status(200).json({ mensagem: "Ordem de venda a mercado executada!", ordem: ordemSalva });
+                return res.status(200).json({ mensagem: "Ordem de venda a mercado executada com sucesso!", ordem: ordemSalva });
+            }
+        } 
+        
+        // LÓGICA PARA ORDENS CONDICIONAIS
+        else if (tipoExecucao === 'condicional') {
+            if (!precoReferencia || precoReferencia <= 0) {
+                return res.status(400).json({ erro: "Para ordens condicionais, informe um preço de referência válido." });
             }
 
-        } catch (erro) {
-            return res.status(500).json({ erro: "Erro ao processar cotações do mercado.", detalhes: erro.message });
-        }
-    } 
-    
-    //  Lógica de uma condicional
-    else if (tipoExecucao === 'condicional') {
-        if (!precoReferencia) {
-            return res.status(400).json({ erro: "Para ordens condicionais, informe o preço de referência (preço alvo)." });
+            //  Impede agendar compras absurdas sem saldo inicial
+            if (tipoOrdem === 'compra') {
+                const custoEstimado = precoReferencia * quantidade;
+                if (usuario.saldoGeral < custoEstimado) {
+                    return res.status(400).json({ erro: `Você não possui saldo suficiente para agendar esta ordem. Custo estimado: R$ ${custoEstimado.toFixed(2)}` });
+                }
+            }
+
+            // Impede agendar vendas de ativos que não possui
+            if (tipoOrdem === 'venda') {
+                const ativoNaCarteira = await Carteira.findOne({ usuario: userId, ticker: ticker.toUpperCase() });
+                if (!ativoNaCarteira || ativoNaCarteira.quantidade < quantidade) {
+                    return res.status(400).json({ erro: "Você não possui ações suficientes em carteira para agendar esta venda." });
+                }
+            }
+
+            // Apenas registra como pendente no banco para o robô processar quando o tempo avançar
+            const ordemSalva = await Ordem.create({
+                usuario: userId, 
+                minutoRegistro: minutoAtual,
+                tipoOrdem, 
+                ticker: ticker.toUpperCase(), 
+                quantidade, 
+                tipoExecucao,
+                precoReferencia, 
+                status: 'pendente'
+            });
+
+            return res.status(200).json({ mensagem: "Ordem condicional registrada e aguardando gatilho de preço na simulação.", ordem: ordemSalva });
         }
 
-        const ordemSalva = ordemModel.criarOrdem({
-            usuario, minutoRegistro: minutoAtual,
-            tipoOrdem, ticker, quantidade, tipoExecucao,
-            precoReferencia, status: 'pendente'
-        });
-
-        return res.status(200).json({ mensagem: "Ordem condicional registrada e aguardando gatilho de preço.", ordem: ordemSalva });
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro interno ao processar a ordem.", detalhes: erro.message });
     }
 };
 
-const listarOrdensNaoExecutadas = (req, res) => {
-    const todas = ordemModel.obterTodasOrdens();
-    const pendentes = todas.filter(o => o.status === 'pendente');
-    return res.status(200).json(pendentes);
-};
+// Listar apenas as ordens do usuário logado
+const listarOrdensNaoExecutadas = async (req, res) => {
+    try {
+        const claims = auth.verifyToken(req, res);
+        if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
 
-const cancelarOrdemCondicional = (req, res) => {
-    const { id } = req.params;
-    const ordemCancelada = ordemModel.atualizarStatusOrdem(id, 'cancelada');
-    
-    if (!ordemCancelada) {
-        return res.status(404).json({ erro: "Ordem não encontrada." });
+        const pendentes = await Ordem.find({ usuario: claims.user_id, status: 'pendente' });
+        return res.status(200).json(pendentes);
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao listar ordens pendentes.", detalhes: erro.message });
     }
-    
-    return res.status(200).json({ mensagem: "Ordem condicional cancelada com sucesso.", ordem: ordemCancelada });
 };
 
-const obterHistoricoTransacoes = (req, res) => {
-    const todas = ordemModel.obterTodasOrdens();
-    return res.status(200).json(todas);
+// Cancelar uma ordem condicional pendente
+const cancelarOrdemCondicional = async (req, res) => {
+    try {
+        const claims = auth.verifyToken(req, res);
+        if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
+
+        const { id } = req.params;
+        const usuario = await Usuario.findById(claims.user_id);
+
+        // Só permite cancelar se a ordem pertencer ao usuário logado e estiver pendente
+        const ordemCancelada = await Ordem.findOneAndUpdate(
+            { _id: id, usuario: claims.user_id, status: 'pendente' },
+            { status: 'cancelada', minutoExecucao: usuario ? usuario.minutoAtual : 0 },
+            { new: true }
+        );
+        
+        if (!ordemCancelada) {
+            return res.status(404).json({ erro: "Ordem não encontrada ou já processada/cancelada." });
+        }
+        
+        return res.status(200).json({ mensagem: "Ordem condicional cancelada com sucesso.", ordem: ordemCancelada });
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao cancelar ordem.", detalhes: erro.message });
+    }
+};
+
+// Histórico completo de ordens do usuário logado
+const obterHistoricoTransacoes = async (req, res) => {
+    try {
+        const claims = auth.verifyToken(req, res);
+        if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
+
+        // Busca todas as ordens (executadas, pendentes ou canceladas) daquele usuário ordenando pelas mais recentes
+        const todas = await Ordem.find({ usuario: claims.user_id }).sort({ createdAt: -1 });
+        return res.status(200).json(todas);
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao buscar histórico de ordens.", detalhes: erro.message });
+    }
 };
 
 module.exports = {
