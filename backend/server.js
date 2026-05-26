@@ -26,7 +26,7 @@ app.use('/api/ordens', ordemRoutes);
 const PORTA = process.env.PORT;
 
 // Conexão com o MongoDB usando a sua variável MONGO_URL
-mongoose.connect(process.env.MONGO_URL)
+const connectDB = async () => mongoose.connect(process.env.MONGO_URL)
     .then(() => {
         console.log(' Banco de dados MongoDB conectado com sucesso!');
         
@@ -38,3 +38,5 @@ mongoose.connect(process.env.MONGO_URL)
     .catch((erro) => {
         console.error(' Erro crítico ao conectar no MongoDB:', erro);
     });
+
+connectDB();    

@@ -20,8 +20,8 @@ const verifyToken = function (req, res) {
     }
 
     try {
-        // Valida a pulseira usando a chave do controller
-        return jwt.verify(authorization[1], authController.TOKEN_KEY);
+        // Valida a pulseira
+        return jwt.verify(authorization[1], TOKEN_KEY);
     }
     catch (e) {
         return null;
