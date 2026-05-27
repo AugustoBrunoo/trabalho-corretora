@@ -24,7 +24,7 @@ router.post('/reset', authController.resetarSenha);
 
 // Rota 5: Trocar senha logado (POST /api/auth/trocaSenha)
 // Usuário logado fornece a senha antiga e altera para uma nova. Exige JWT enviado no Header!
-router.post('/trocaSenha', verifyToken, authController.trocaSenhaLogado);
+router.patch('/trocaSenha', verifyToken, authController.trocaSenhaLogado);
 
 // 3. Exportamos o roteador para que o arquivo principal (server.js) consiga enxergar essas rotas
 module.exports = router;
