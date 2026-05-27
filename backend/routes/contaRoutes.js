@@ -1,15 +1,10 @@
 const express = require('express');
 const router = express.Router();
-
 const contaController = require('../controllers/contaController');
+const { verifyToken } = require('../auth/auth');
 
-// Endpoint: POST /api/conta/deposito
-router.post('/deposito', contaController.depositar);
-
-// Endpoint: POST /api/conta/retirada
-router.post('/retirada', contaController.retirada);
-
-// Endpoint: GET /api/conta/transacoes
-router.get('/transacoes', contaController.listarTransacoes);
+router.post('/deposito', verifyToken, contaController.depositar);
+router.post('/retirada', verifyToken, contaController.retirada);
+router.get('/transacoes', verifyToken, contaController.listarTransacoes);
 
 module.exports = router;

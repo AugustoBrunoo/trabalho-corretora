@@ -1,14 +1,8 @@
 const express = require('express');
 const router = express.Router();
-
-// 2. Importamos o Controller (o "Chefe de Cozinha" da autenticação)
 const authController = require('../controllers/authController');
+const { verifyToken } = require('../auth/auth');
 
-/**
- * ==========================================
- * ROTAS DE AUTENTICAÇÃO 
- * ==========================================
- */
 
 // Rota de Cadastro
 // Método: POST
@@ -30,7 +24,7 @@ router.post('/reset', authController.resetarSenha);
 
 // Rota 5: Trocar senha logado (POST /api/auth/trocaSenha)
 // Usuário logado fornece a senha antiga e altera para uma nova. Exige JWT enviado no Header!
-router.post('/trocaSenha', authController.trocaSenhaLogado);
+router.post('/trocaSenha', verifyToken, authController.trocaSenhaLogado);
 
 // 3. Exportamos o roteador para que o arquivo principal (server.js) consiga enxergar essas rotas
 module.exports = router;
