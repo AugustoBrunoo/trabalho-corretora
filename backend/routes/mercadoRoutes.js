@@ -5,13 +5,13 @@ const mercadoController = require('../controllers/mercadoController');
 const { verifyToken } = require('../auth/auth'); 
 
 // ==========================================
-// Rotas de Tempo (PÚBLICAS - Controle Global)
+// Rotas de Tempo - Controle Global)
 // ==========================================
-// GET /api/mercado/tempo - Retorna o minuto atual
-router.get('/tempo', mercadoController.pegarTempo);
+// GET /api/mercado/tempo - Retorna o minuto atual 
+router.get('/tempo', verifyToken, mercadoController.pegarTempo);
 
-// POST /api/mercado/tempo - Avança o relógio
-router.post('/tempo', mercadoController.avancarTempo);
+// POST /api/mercado/tempo - Avança o relógio 
+router.post('/tempo', verifyToken, mercadoController.avancarTempo);
 
 
 // ====================================================

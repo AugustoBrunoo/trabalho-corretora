@@ -30,7 +30,7 @@ const processarOrdem = async (req, res) => {
         // O tempo agora é individualizado e persistido por investidor
         const minutoAtual = usuario.minutoAtual;
 
-        // LÓGICA PARA ORDENS A MERCADO
+        // LÓGICA PARA ORDENS DE MERCADO
         if (tipoExecucao === 'mercado') {
             const precos = await precosService.obterPrecosPorMinuto(minutoAtual);
             const cotacao = precos.find(p => p.ticker === ticker.toUpperCase());
@@ -39,7 +39,7 @@ const processarOrdem = async (req, res) => {
                 return res.status(404).json({ erro: `Ação ${ticker.toUpperCase()} não encontrada no mercado para o minuto ${minutoAtual}.` });
             }
             
-            const precoAtual = cotacao.currentPrice || cotacao.preco;
+            const precoAtual = cotacao.preco;
             const valorTotalOrdem = precoAtual * quantidade;
 
             // sub-lógica de compra a mercado
@@ -52,7 +52,7 @@ const processarOrdem = async (req, res) => {
                     });
                 }
 
-                // Deduz o saldo do usuário
+                // Reduz o saldo do usuário
                 usuario.saldoGeral -= valorTotalOrdem;
                 await usuario.save();
 
@@ -178,8 +178,8 @@ const processarOrdem = async (req, res) => {
     }
 };
 
-// Listar apenas as ordens do usuário logado
-const listarOrdensNaoExecutadas = async (req, res) => {
+// Listar apenas as ordens pendentes do usuário logado
+const listarOrdensPendentes = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
@@ -218,7 +218,7 @@ const cancelarOrdemCondicional = async (req, res) => {
 };
 
 // Histórico completo de ordens do usuário logado
-const obterHistoricoTransacoes = async (req, res) => {
+const exibirHistoricoOrdens = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
@@ -233,7 +233,7 @@ const obterHistoricoTransacoes = async (req, res) => {
 
 module.exports = {
     processarOrdem,
-    listarOrdensNaoExecutadas,
+    listarOrdensPendentes,
     cancelarOrdemCondicional,
-    obterHistoricoTransacoes
+    exibirHistoricoOrdens
 };

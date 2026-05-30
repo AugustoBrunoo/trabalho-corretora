@@ -1,6 +1,8 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Usuario = require('../models/usuarioModel');
+const AcaoInteresse = require('../models/acaoInteresseModel');
+const precosService = require('../services/precosService');
 
 // Chave secreta usada pelo jwt.sign aqui e pelo auth.js na verificação (Assinatura)
 const TOKEN_KEY = process.env.TOKEN_KEY;
@@ -30,7 +32,7 @@ const registrar = async (req, res) => {
             return res.status(400).json({ message: "O e-mail do usuário não está em um formato adequado." });
         }
         
-        //  Busca no MongoDB se o e-mail já existe
+        // Busca no MongoDB se o e-mail já existe
         const usuarioExistente = await Usuario.findOne({ email: email });
         if (usuarioExistente) {
             return res.status(400).json({ message: "Já existe um usuário registrado com este e-mail." });
@@ -45,10 +47,38 @@ const registrar = async (req, res) => {
 
         const senhaCriptografada = await bcrypt.hash(senha, 10);
         
-        // Cria o usuário diretamente no MongoDB
-        await Usuario.create({ nome, email, senha: senhaCriptografada });
+        // Cria o usuário no MongoDB e guarda a resposta para pegar o _id
+        const novoUsuario = await Usuario.create({ nome, email, senha: senhaCriptografada });
 
-        return res.status(201).json({ message: "O novo usuário foi criado." });
+        // =========================================================================
+        // 10 Ações Aleatórias para Novos Usuários
+        // =========================================================================
+        try {
+            // Pega as ações do minuto 0 para ter a lista completa
+            const todosOsAtivos = await precosService.obterPrecosPorMinuto(0);
+            
+            // Embaralha a lista
+            const ativosEmbaralhados = todosOsAtivos.sort(() => 0.5 - Math.random());
+            
+            // Pega apenas as 10 primeiras
+            const dezAcoesAleatorias = ativosEmbaralhados.slice(0, 10);
+            
+            // Prepara os objetos para salvar no banco vinculados ao novo usuário
+            const acoesParaSalvar = dezAcoesAleatorias.map(acao => ({
+                usuario: novoUsuario._id, 
+                ticker: acao.ticker.toUpperCase()
+            }));
+
+            // Salva todas de uma vez 
+            await AcaoInteresse.insertMany(acoesParaSalvar);
+        } catch (erroAcoes) {
+            console.error("Erro ao popular as 10 ações iniciais:", erroAcoes.message);
+            // O try/catch interno garante que, se falhar a busca de ações, 
+            // o cadastro do usuário não é cancelado.
+        }
+        // =========================================================================
+
+        return res.status(201).json({ message: "O novo usuário foi criado com sucesso!" });
     } catch (erro) {
         return res.status(500).json({ message: "Erro no servidor ao registrar usuário.", detalhes: erro.message });
     }

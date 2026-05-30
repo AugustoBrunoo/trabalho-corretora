@@ -29,7 +29,7 @@ const consultarCarteira = async (req, res) => {
         let valorTotalInvestidoCarteira = 0;
         let valorTotalAtualCarteira = 0;
 
-        // Junta a quantidade que o utilizador tem com o preço de agora e calcula os rendimentos
+        // Junta a quantidade que o usuário tem com o preço de agora e calcula os rendimentos
         const carteiraComCalculos = ativos.map(ativo => {
             // Procura o preço atual desta ação específica na API do professor
             const cotacao = todosOsPrecos.find(p => p.ticker === ativo.ticker.toUpperCase());

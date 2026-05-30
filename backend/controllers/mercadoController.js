@@ -4,13 +4,14 @@ const Ordem = require('../models/ordemModel');
 const Carteira = require('../models/carteiraModel');
 const Usuario = require('../models/usuarioModel');
 const Transacao = require('../models/transacaoModel');
+const Mercado = require('../models/mercadoModel'); // 🌟 IMPORTANDO O TEMPO GLOBAL
 const auth = require('../auth/auth');
 
 // Função auxiliar (automatização de ordens pendentes)
-async function processarOrdensCondicionaisAgendadas(minutoAtual, userId) {
+async function processarOrdensCondicionaisAgendadas(minutoAtual) {
     try {
-        //  Busca apenas as ordens pendentes do usuário logado que avançou o tempo
-        const ordensPendentes = await Ordem.find({ status: 'pendente', usuario: userId });
+        // Busca todas as ordens pendentes no sistema 
+        const ordensPendentes = await Ordem.find({ status: 'pendente' });
         if (ordensPendentes.length === 0) return;
 
         // Pega os preços oficiais deste novo minuto simulado
@@ -20,20 +21,19 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual, userId) {
             const cotacao = precosAgora.find(p => p.ticker === ordem.ticker.toUpperCase());
             if (!cotacao) continue;
 
-            const precoAtual = cotacao.currentPrice || cotacao.preco;
+            const precoAtual = cotacao.preco;
             let dispararGatilho = false;
 
-            // Condição: Compra quando o preço desce até o valor alvo (ou menos)
+            // Condições de disparo
             if (ordem.tipoOrdem === 'compra' && precoAtual <= ordem.precoReferencia) {
                 dispararGatilho = true;
-            }
-            // Condição: Venda quando o preço sobe até o valor alvo (ou mais)
-            else if (ordem.tipoOrdem === 'venda' && precoAtual >= ordem.precoReferencia) {
+            } else if (ordem.tipoOrdem === 'venda' && precoAtual >= ordem.precoReferencia) {
                 dispararGatilho = true;
             }
 
             if (dispararGatilho) {
-                const usuario = await Usuario.findById(userId);
+                // Busca o dono específico desta ordem que acabou de disparar
+                const usuario = await Usuario.findById(ordem.usuario);
                 if (!usuario) {
                     ordem.status = 'falhada';
                     await ordem.save();
@@ -44,51 +44,46 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual, userId) {
 
                 if (ordem.tipoOrdem === 'compra') {
                     if (usuario.saldoGeral >= valorTotalOrdem) {
-                        // Executa a compra deduzindo o saldo
                         usuario.saldoGeral -= valorTotalOrdem;
                         await usuario.save();
 
                         await Transacao.create({
-                            usuario: userId,
+                            usuario: usuario._id,
                             tipo: "retirada",
                             valor: valorTotalOrdem,
                             descricao: `[EXECUÇÃO AUTOMÁTICA] Compra condicional de ${ordem.quantidade} ações de ${ordem.ticker}`,
                             minutoSimulacao: minutoAtual,
-                            saldoResultante: usuario.saldoGeral // Grava fotografia do saldo pós-transação
+                            saldoResultante: usuario.saldoGeral
                         });
 
-                        // Atualiza Carteira
-                        let ativoNaCarteira = await Carteira.findOne({ usuario: userId, ticker: ordem.ticker });
+                        let ativoNaCarteira = await Carteira.findOne({ usuario: usuario._id, ticker: ordem.ticker });
                         if (ativoNaCarteira) {
                             const novaQtd = ativoNaCarteira.quantidade + ordem.quantidade;
                             ativoNaCarteira.precoMedio = ((ativoNaCarteira.precoMedio * ativoNaCarteira.quantidade) + (precoAtual * ordem.quantidade)) / novaQtd;
                             ativoNaCarteira.quantidade = novaQtd;
                             await ativoNaCarteira.save();
                         } else {
-                            await Carteira.create({ usuario: userId, ticker: ordem.ticker, quantidade: ordem.quantidade, precoMedio: precoAtual });
+                            await Carteira.create({ usuario: usuario._id, ticker: ordem.ticker, quantidade: ordem.quantidade, precoMedio: precoAtual });
                         }
 
-                        // Atualiza a Ordem para Executada
                         ordem.status = 'executada';
                         ordem.minutoExecucao = minutoAtual;
-                        ordem.precoReferencia = precoAtual; // Salva o preço real de fechamento da operação
+                        ordem.precoReferencia = precoAtual;
                         await ordem.save();
                     } else {
-                        // Sem fundos suficientes no momento do disparo do gatilho
                         ordem.status = 'falhada';
                         await ordem.save();
                     }
                 } 
                 else if (ordem.tipoOrdem === 'venda') {
-                    let ativoNaCarteira = await Carteira.findOne({ usuario: userId, ticker: ordem.ticker });
+                    let ativoNaCarteira = await Carteira.findOne({ usuario: usuario._id, ticker: ordem.ticker });
                     
                     if (ativoNaCarteira && ativoNaCarteira.quantidade >= ordem.quantidade) {
-                        // Executa a venda adicionando fundos
                         usuario.saldoGeral += valorTotalOrdem;
                         await usuario.save();
 
                         await Transacao.create({
-                            usuario: userId,
+                            usuario: usuario._id,
                             tipo: "deposito",
                             valor: valorTotalOrdem,
                             descricao: `[EXECUÇÃO AUTOMÁTICA] Venda condicional de ${ordem.quantidade} ações de ${ordem.ticker}`,
@@ -103,13 +98,11 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual, userId) {
                             await ativoNaCarteira.save();
                         }
 
-                        // Atualiza a Ordem para Executada
                         ordem.status = 'executada';
                         ordem.minutoExecucao = minutoAtual;
                         ordem.precoReferencia = precoAtual;
                         await ordem.save();
                     } else {
-                        // Sem a quantidade necessária de ações em carteira na hora do disparo do gatilho
                         ordem.status = 'falhada';
                         await ordem.save();
                     }
@@ -121,18 +114,24 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual, userId) {
     }
 }
 
-// Retorna o tempo do usuário logado
+// Retorna o tempo do sistema 
 const pegarTempo = async (req, res) => {
-    const claims = auth.verifyToken(req, res);
-    if (!claims) return res.status(401).json({ erro: "Não autorizado." });
+    try {
+        const claims = auth.verifyToken(req, res);
+        if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
-    const usuario = await Usuario.findById(claims.user_id);
-    if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
+        let mercado = await Mercado.findOne();
+        if (!mercado) {
+            mercado = await Mercado.create({ minutoAtual: 0 });
+        }
 
-    return res.status(200).json({ minutoAtual: usuario.minutoAtual });
+        return res.status(200).json({ minutoAtual: mercado.minutoAtual });
+    } catch (erro) {
+        return res.status(500).json({ erro: "Erro ao buscar o tempo.", detalhe: erro.message });
+    }
 };
 
-// Avança o tempo do usuário logado no banco de dados e dispara a automatização
+// Avança o tempo no banco de dados e dispara a automatização
 const avancarTempo = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -143,22 +142,26 @@ const avancarTempo = async (req, res) => {
             return res.status(400).json({ erro: "Quantidade de minutos inválida para o avanço." });
         }
 
-        const usuario = await Usuario.findById(claims.user_id);
-        if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
+        // Busca o relógio no banco
+        let mercado = await Mercado.findOne();
+        if (!mercado) {
+            mercado = await Mercado.create({ minutoAtual: 0 });
+        }
 
-        // Avança o relógio deste usuário específico
-        usuario.minutoAtual += Number(minutos);
+        // Avança o relógio global
+        mercado.minutoAtual += Number(minutos);
         
-        // Proteção para não passar do limite de 59 minutos da simulação do professor
-        if (usuario.minutoAtual > 59) usuario.minutoAtual = 59; 
+        // Proteção para não passar do limite de 59 minutos da simulação
+        if (mercado.minutoAtual > 59) mercado.minutoAtual = 59; 
         
-        await usuario.save();
+        await mercado.save();
 
-        await processarOrdensCondicionaisAgendadas(usuario.minutoAtual, usuario._id);
+        // Dispara o processamento para todos
+        await processarOrdensCondicionaisAgendadas(mercado.minutoAtual);
 
         return res.status(200).json({
             mensagem: `Tempo avançado com sucesso.`,
-            minutoAtual: usuario.minutoAtual
+            minutoAtual: mercado.minutoAtual
         });
     } catch (erro) {
         return res.status(500).json({ erro: "Erro ao avançar o tempo.", detalhe: erro.message });
@@ -174,7 +177,6 @@ const adicionarAcaoInteresse = async (req, res) => {
         const { ticker } = req.body;
         if (!ticker) return res.status(400).json({ erro: "O código da ação (ticker) é obrigatório." });
 
-        // Guarda no MongoDB vinculando ao ID do usuário logado sem duplicar (Upsert)
         await AcaoInteresse.findOneAndUpdate(
             { usuario: claims.user_id, ticker: ticker.toUpperCase() },
             { usuario: claims.user_id, ticker: ticker.toUpperCase() },
@@ -214,30 +216,49 @@ const removerAcaoInteresse = async (req, res) => {
     }
 };
 
-// Lista as ações do usuário logado com os preços baseados no seu tempo individual
+// Lista as ações do usuário buscando o último preço válido
 const listarAcoesInteresse = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
-        const usuario = await Usuario.findById(claims.user_id);
-        if (!usuario) return res.status(404).json({ erro: "Usuário não encontrado." });
+        // Pega o tempo global
+        let mercado = await Mercado.findOne();
+        const minutoGlobal = mercado ? mercado.minutoAtual : 0;
         
-        const minutoAtualUsuario = usuario.minutoAtual;
-        
-        // Procura apenas as ações favoritadas por este utilizador específico
+        // Procura as ações favoritadas
         const minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });
         const meusTickers = minhasAcoesSalvas.map(a => a.ticker);
 
-        // Busca a lista de cotações com base no minuto real do usuário logado
-        const todosOsPrecos = await precosService.obterPrecosPorMinuto(minutoAtualUsuario);
+        const acoesParaATela = [];
 
-        // Filtra a resposta para devolver apenas os dados das ações que o utilizador favoritou
-        const acoesFiltradas = todosOsPrecos.filter(acao => meusTickers.includes(acao.ticker.toUpperCase()));
+        // Para cada ação favoritada, procura o preço no minuto atual ou vai voltando no tempo
+        for (let ticker of meusTickers) {
+            let precoEncontrado = null;
+            let cotacaoCompleta = null;
+            
+            for (let m = minutoGlobal; m >= 0; m--) {
+                const precosHistoricos = await precosService.obterPrecosPorMinuto(m);
+                const cotacao = precosHistoricos.find(p => p.ticker === ticker);
+                
+                if (cotacao) {
+                    precoEncontrado = cotacao.preco;
+                    cotacaoCompleta = cotacao; // Guarda todo o objeto caso o front precise
+                    break; 
+                }
+            }
+
+            if (precoEncontrado !== null) {
+                acoesParaATela.push({
+                    ticker: ticker,
+                    preco: precoEncontrado
+                });
+            }
+        }
 
         return res.status(200).json({
-            minutoAtual: minutoAtualUsuario,
-            acoes: acoesFiltradas
+            minutoAtual: minutoGlobal,
+            acoes: acoesParaATela
         });
 
     } catch (erro) {

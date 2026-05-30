@@ -22,10 +22,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/carteira', carteiraRoutes);
 app.use('/api/ordens', ordemRoutes);
 
-// Configuração da Porta (Usa a do .env ou assume a 3000 por padrão)
+// Configuração da Porta
 const PORTA = process.env.PORT;
 
-// Conexão com o MongoDB usando a sua variável MONGO_URL
+// Conexão com o MongoDB usando a variável MONGO_URL
 const connectDB = async () => mongoose.connect(process.env.MONGO_URL)
     .then(() => {
         console.log(' Banco de dados MongoDB conectado com sucesso!');

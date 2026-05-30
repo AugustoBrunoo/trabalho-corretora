@@ -1,4 +1,4 @@
-
+/*
 const precosService = require('./services/precosService');
 
 async function testar() {
@@ -22,16 +22,16 @@ async function testar() {
 }
 
 testar();
+*/
 
-
-/*const precosService = require('./services/precosService');
+const precosService = require('./services/precosService');
 
 async function testarTodosOsMinutos() {
-    console.log("🚀 Iniciando varredura completa da API do professor (Minutos 0 a 59)...\n");
+    console.log(" Iniciando varredura completa da API do professor (Minutos 0 a 59)...\n");
     
     // Laço de repetição de 0 a 59
     for (let minuto = 0; minuto <= 59; minuto++) {
-        console.log(`⏱️ Buscando preços para o Minuto [${minuto}]...`);
+        console.log(` Buscando preços para o Minuto [${minuto}]...`);
         
         try {
             // O await garante que o laço espera a resposta desta requisição antes de ir para o próximo minuto
@@ -57,4 +57,4 @@ async function testarTodosOsMinutos() {
 }
 
 // Executa a função de teste
-testarTodosOsMinutos();*/
+testarTodosOsMinutos();

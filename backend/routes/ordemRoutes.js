@@ -6,8 +6,8 @@ const { verifyToken } = require('../auth/auth');
 // Aplica o verifyToken como intermediário em todas as rotas
 router.post('/', verifyToken, ordemController.processarOrdem);
 
-router.get('/pendentes', verifyToken, ordemController.listarOrdensNaoExecutadas);
+router.get('/pendentes', verifyToken, ordemController.listarOrdensPendentes);
 router.delete('/:id', verifyToken, ordemController.cancelarOrdemCondicional);
-router.get('/transacoes', verifyToken, ordemController.obterHistoricoTransacoes);
+router.get('/transacoes', verifyToken, ordemController.exibirHistoricoOrdens);
 
 module.exports = router;

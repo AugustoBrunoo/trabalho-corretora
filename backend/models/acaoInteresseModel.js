@@ -5,7 +5,7 @@ const acaoInteresseSchema = new mongoose.Schema({
     ticker: { type: String, required: true }
 }, { timestamps: true });
 
-// Garante que o mesmo utilizador não adiciona o mesmo ticker duas vezes
+// Garante que o mesmo usuário não adicione o mesmo ticker duas vezes
 acaoInteresseSchema.index({ usuario: 1, ticker: 1 }, { unique: true });
 
 module.exports = mongoose.model('AcaoInteresse', acaoInteresseSchema);

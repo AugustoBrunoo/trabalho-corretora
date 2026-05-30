@@ -1,13 +1,10 @@
-let minutoAtual = 0; 
+const mongoose = require('mongoose');
 
-const obterTempo = () => minutoAtual;
+const MercadoSchema = new mongoose.Schema({
+    minutoAtual: {
+        type: Number,
+        default: 0
+    }
+});
 
-const avancarTempo = (minutos) => {
-    minutoAtual += minutos;
-    return minutoAtual;
-};
-
-module.exports = { 
-    obterTempo, 
-    avancarTempo 
-};
+module.exports = mongoose.model('Mercado', MercadoSchema);

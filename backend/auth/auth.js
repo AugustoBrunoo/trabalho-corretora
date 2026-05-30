@@ -1,4 +1,3 @@
-// auth/auth.js
 const jwt = require("jsonwebtoken");
 
 const TOKEN_KEY = process.env.TOKEN_KEY;
