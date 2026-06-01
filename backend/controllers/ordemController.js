@@ -3,6 +3,7 @@ const Carteira = require('../models/carteiraModel');
 const Usuario = require('../models/usuarioModel');
 const Transacao = require('../models/transacaoModel');
 const Mercado = require('../models/mercadoModel'); 
+const mercadoService = require('../services/mercadoService');
 const precosService = require('../services/precosService');
 const auth = require('../auth/auth');
 
@@ -29,8 +30,7 @@ const processarOrdem = async (req, res) => {
         }
 
         // busca o tempo global
-        let mercado = await Mercado.findOne();
-        const minutoAtual = mercado ? mercado.minutoAtual : 0;
+        const minutoAtual = await mercadoService.obterMinutoGlobal();
 
         // LÓGICA PARA ORDENS DE MERCADO
         if (tipoExecucao === 'mercado') {
@@ -204,13 +204,12 @@ const cancelarOrdemCondicional = async (req, res) => {
         const { id } = req.params;
 
         // busca o tempo global
-        let mercado = await Mercado.findOne();
-        const minutoAtual = mercado ? mercado.minutoAtual : 0;
+        const minutoGlobal = await mercadoService.obterMinutoGlobal();
 
         // Só permite cancelar se a ordem pertencer ao usuário logado e estiver pendente
         const ordemCancelada = await Ordem.findOneAndUpdate(
             { _id: id, usuario: claims.user_id, status: 'pendente' },
-            { status: 'cancelada', minutoExecucao: minutoAtual }, // 🌟 Atualizado para usar o tempo global
+            { status: 'cancelada', minutoExecucao: minutoAtual }, 
             { new: true }
         );
         

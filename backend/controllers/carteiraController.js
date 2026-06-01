@@ -1,6 +1,7 @@
 const Carteira = require('../models/carteiraModel');
 const Usuario = require('../models/usuarioModel'); 
 const Mercado = require('../models/mercadoModel');
+const mercadoService = require('../services/mercadoService');
 const precosService = require('../services/precosService'); 
 const auth = require('../auth/auth');
 
@@ -20,8 +21,7 @@ const consultarCarteira = async (req, res) => {
         }
 
         // busca o minuto atual global
-        let mercado = await Mercado.findOne();
-        const minutoAtual = mercado ? mercado.minutoAtual : 0;
+        const minutoAtual = await mercadoService.obterMinutoGlobal();
         
         // Pega as ações que o utilizador possui guardadas no MongoDB
         const ativos = await Carteira.find({ usuario: userId });

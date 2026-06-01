@@ -1,4 +1,5 @@
 const precosService = require('../services/precosService');
+const mercadoService = require('../services/mercadoService');
 const AcaoInteresse = require('../models/acaoInteresseModel');
 const Ordem = require('../models/ordemModel');
 const Carteira = require('../models/carteiraModel');
@@ -115,12 +116,10 @@ const pegarTempo = async (req, res) => {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
-        let mercado = await Mercado.findOne();
-        if (!mercado) {
-            mercado = await Mercado.create({ minutoAtual: 0 });
-        }
+        // Chama a função e já recebe o número
+        const minutoGlobal = await mercadoService.obterMinutoGlobal();
 
-        return res.status(200).json({ minutoAtual: mercado.minutoAtual });
+        return res.status(200).json({ minutoAtual: minutoGlobal });
     } catch (erro) {
         return res.status(500).json({ erro: "Erro ao buscar o tempo.", detalhe: erro.message });
     }
@@ -241,22 +240,28 @@ const listarAcoesInteresse = async (req, res) => {
             }
 
             if (precoEncontrado !== null) {
-                // Trocado fechamentosDiarios por dadosFechamentoGeral
                 const fechamentoAcao = dadosFechamentoGeral.find(f => f.ticker === ticker);
-                
-                // Convertendo para Number de forma segura antes da matemática
-                const precoFechamento = fechamentoAcao ? Number(fechamentoAcao.fechamento) : Number(precoEncontrado);
                 const precoAtual = Number(precoEncontrado);
+                
+                // Convertendo para Number de forma segura antes da matemática (evita o NaN)
+                const precoFechamento = (fechamentoAcao && fechamentoAcao.fechamento !== undefined && !isNaN(Number(fechamentoAcao.fechamento))) 
+                    ? Number(fechamentoAcao.fechamento) 
+                    : precoAtual;
 
-                // Matemática de variações 
+                // Matemática de variações (usando apenas números puros)
                 const variacaoNominal = precoAtual - precoFechamento;
                 const variacaoPercentual = precoFechamento > 0 ? (variacaoNominal / precoFechamento) * 100 : 0;
+
+                // Define o sinal de "+" se for positivo (se for negativo, o toFixed() já coloca o "-")
+                const sinalNominal = variacaoNominal > 0 ? "+" : "";
+                const sinalPercentual = variacaoPercentual > 0 ? "+" : "";
 
                 acoesParaATela.push({
                     ticker: ticker,
                     preco: precoAtual.toFixed(2),
-                    variacaoNominal: variacaoNominal.toFixed(2), 
-                    variacaoPercentual: variacaoPercentual.toFixed(2) 
+                    // Formata a string final juntando o sinal e o valor
+                    variacaoNominal: `${sinalNominal}${variacaoNominal.toFixed(2)}`, 
+                    variacaoPercentual: `${sinalPercentual}${variacaoPercentual.toFixed(2)}` 
                 });
             }
         }

@@ -1,5 +1,7 @@
 const Transacao = require('../models/transacaoModel'); 
 const Usuario = require('../models/usuarioModel');
+const Mercado = require('../models/mercadoModel');
+const mercadoService = require('../services/mercadoService');
 const auth = require('../auth/auth');
 
 // Lógica para depositar
@@ -25,6 +27,9 @@ const depositar = async (req, res) => {
             return res.status(404).json({ erro: "Usuário não encontrado." });
         }
 
+        // pega o tempo global
+        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+
         // Atualiza o saldo geral do usuário
         usuario.saldoGeral += Number(valor);
         await usuario.save();
@@ -35,7 +40,7 @@ const depositar = async (req, res) => {
             tipo: 'deposito',
             valor: Number(valor),
             descricao: descricao.trim(),
-            minutoSimulacao: usuario.minutoAtual, // Pega o minuto do relógio desse usuário
+            minutoSimulacao: minutoGlobal, 
             saldoResultante: usuario.saldoGeral   // Saldo histórico após o depósito
         });
 
@@ -81,6 +86,8 @@ const retirar = async (req, res) => {
             });
         }
 
+        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+
         // Reduz o valor do saldo do usuário
         usuario.saldoGeral -= Number(valor);
         await usuario.save();
@@ -91,7 +98,7 @@ const retirar = async (req, res) => {
             tipo: 'retirada',
             valor: Number(valor),
             descricao: descricao.trim(),
-            minutoSimulacao: usuario.minutoAtual,
+            minutoSimulacao: minutoGlobal,
             saldoResultante: usuario.saldoGeral
         });
 
@@ -126,9 +133,12 @@ const listarTransacoes = async (req, res) => {
         // Busca todas as transações daquele usuário específico em ordem cronológica de inserção
         const transacoes = await Transacao.find({ usuario: userId }).sort({ createdAt: 1 });
 
+        // pega o minuto global
+       const minutoGlobal = await mercadoService.obterMinutoGlobal();
+
         return res.status(200).json({
             saldoAtual: usuario.saldoGeral,
-            minutoAtual: usuario.minutoAtual,
+            minutoAtual: minutoGlobal,
             transacoes: transacoes
         });
 
