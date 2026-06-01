@@ -34,6 +34,34 @@ const obterPrecosPorMinuto = async (minutoRelatorio) => {
     }
 };
 
+// Busca o preço de fechamento do dia anterior (tickers.json)
+const obterFechamentoDiario = async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); 
+
+    try {
+        const urlTickers = `https://raw.githubusercontent.com/marciobarros/dsw-simulador-corretora/refs/heads/main/tickers.json`;
+        const resposta = await fetch(urlTickers, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!resposta.ok) {
+            throw new Error(`Não foi possível buscar o arquivo tickers.json (Status: ${resposta.status})`);
+        }
+
+        return await resposta.json();
+
+    } catch (erro) {
+        clearTimeout(timeoutId);
+        if (erro.name === 'AbortError') {
+            console.error(` [PrecosService] Timeout ao buscar o arquivo tickers.json do professor.`);
+            throw new Error("A API de fechamento do professor demorou demais para responder.");
+        }
+        console.error("Erro ao buscar fechamento no PrecosService:", erro.message);
+        throw erro;
+    }
+};
+
 module.exports = {
-    obterPrecosPorMinuto
+    obterPrecosPorMinuto,
+    obterFechamentoDiario 
 };

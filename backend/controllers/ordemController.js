@@ -2,6 +2,7 @@ const Ordem = require('../models/ordemModel');
 const Carteira = require('../models/carteiraModel');
 const Usuario = require('../models/usuarioModel');
 const Transacao = require('../models/transacaoModel');
+const Mercado = require('../models/mercadoModel'); 
 const precosService = require('../services/precosService');
 const auth = require('../auth/auth');
 
@@ -21,14 +22,15 @@ const processarOrdem = async (req, res) => {
             return res.status(400).json({ erro: "Campos obrigatórios ausentes ou quantidade inválida." });
         }
 
-        // Busca o usuário no banco de dados para validar saldos e CAPTURAR O MINUTO REAL DELE
+        // Busca o usuário no banco de dados para validar saldos
         const usuario = await Usuario.findById(userId);
         if (!usuario) {
             return res.status(404).json({ erro: "Usuário não encontrado." });
         }
 
-        // O tempo agora é individualizado e persistido por investidor
-        const minutoAtual = usuario.minutoAtual;
+        // busca o tempo global
+        let mercado = await Mercado.findOne();
+        const minutoAtual = mercado ? mercado.minutoAtual : 0;
 
         // LÓGICA PARA ORDENS DE MERCADO
         if (tipoExecucao === 'mercado') {
@@ -42,25 +44,27 @@ const processarOrdem = async (req, res) => {
             const precoAtual = cotacao.preco;
             const valorTotalOrdem = precoAtual * quantidade;
 
+            const valorTotalCalculado = precoAtual * quantidade;
+
             // sub-lógica de compra a mercado
             if (tipoOrdem === 'compra') {
-                if (usuario.saldoGeral < valorTotalOrdem) {
+                if (usuario.saldoGeral < valorTotalCalculado) {
                     return res.status(400).json({ 
                         erro: "Saldo insuficiente para realizar a compra.", 
                         saldoAtual: usuario.saldoGeral, 
-                        custoNecessario: valorTotalOrdem 
+                        custoNecessario: valorTotalCalculado 
                     });
                 }
 
                 // Reduz o saldo do usuário
-                usuario.saldoGeral -= valorTotalOrdem;
+                usuario.saldoGeral -= valorTotalCalculado;
                 await usuario.save();
 
                 // grava fotografia do saldo resultante e o minuto da simulação
                 await Transacao.create({
                     usuario: userId,
                     tipo: "retirada",
-                    valor: valorTotalOrdem,
+                    valor: valorTotalCalculado,
                     minutoSimulacao: minutoAtual,
                     saldoResultante: usuario.saldoGeral,
                     descricao: `Compra a mercado de ${quantidade} ações de ${ticker.toUpperCase()}`
@@ -104,14 +108,14 @@ const processarOrdem = async (req, res) => {
                 }
 
                 // Incrementa o dinheiro na conta do usuário
-                usuario.saldoGeral += valorTotalOrdem;
+                usuario.saldoGeral += valorTotalCalculado;
                 await usuario.save();
 
-                // grava o saldo resultante e o minuto correto do usuário
+                // grava o saldo resultante e o minuto correto do sistema
                 await Transacao.create({
                     usuario: userId,
                     tipo: "deposito",
-                    valor: valorTotalOrdem,
+                    valor: valorTotalCalculado,
                     minutoSimulacao: minutoAtual,
                     saldoResultante: usuario.saldoGeral,
                     descricao: `Venda a mercado de ${quantidade} ações de ${ticker.toUpperCase()}`
@@ -142,7 +146,7 @@ const processarOrdem = async (req, res) => {
                 return res.status(400).json({ erro: "Para ordens condicionais, informe um preço de referência válido." });
             }
 
-            //  Impede agendar compras absurdas sem saldo inicial
+            // Impede agendar compras absurdas sem saldo inicial
             if (tipoOrdem === 'compra') {
                 const custoEstimado = precoReferencia * quantidade;
                 if (usuario.saldoGeral < custoEstimado) {
@@ -198,12 +202,15 @@ const cancelarOrdemCondicional = async (req, res) => {
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
 
         const { id } = req.params;
-        const usuario = await Usuario.findById(claims.user_id);
+
+        // busca o tempo global
+        let mercado = await Mercado.findOne();
+        const minutoAtual = mercado ? mercado.minutoAtual : 0;
 
         // Só permite cancelar se a ordem pertencer ao usuário logado e estiver pendente
         const ordemCancelada = await Ordem.findOneAndUpdate(
             { _id: id, usuario: claims.user_id, status: 'pendente' },
-            { status: 'cancelada', minutoExecucao: usuario ? usuario.minutoAtual : 0 },
+            { status: 'cancelada', minutoExecucao: minutoAtual }, // 🌟 Atualizado para usar o tempo global
             { new: true }
         );
         
@@ -223,7 +230,6 @@ const exibirHistoricoOrdens = async (req, res) => {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
 
-        // Busca todas as ordens (executadas, pendentes ou canceladas) daquele usuário ordenando pelas mais recentes
         const todas = await Ordem.find({ usuario: claims.user_id }).sort({ createdAt: -1 });
         return res.status(200).json(todas);
     } catch (erro) {

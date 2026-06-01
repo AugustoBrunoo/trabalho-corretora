@@ -4,17 +4,15 @@ const Ordem = require('../models/ordemModel');
 const Carteira = require('../models/carteiraModel');
 const Usuario = require('../models/usuarioModel');
 const Transacao = require('../models/transacaoModel');
-const Mercado = require('../models/mercadoModel'); // 🌟 IMPORTANDO O TEMPO GLOBAL
+const Mercado = require('../models/mercadoModel'); 
 const auth = require('../auth/auth');
 
 // Função auxiliar (automatização de ordens pendentes)
 async function processarOrdensCondicionaisAgendadas(minutoAtual) {
     try {
-        // Busca todas as ordens pendentes no sistema 
         const ordensPendentes = await Ordem.find({ status: 'pendente' });
         if (ordensPendentes.length === 0) return;
 
-        // Pega os preços oficiais deste novo minuto simulado
         const precosAgora = await precosService.obterPrecosPorMinuto(minutoAtual);
 
         for (let ordem of ordensPendentes) {
@@ -24,7 +22,6 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
             const precoAtual = cotacao.preco;
             let dispararGatilho = false;
 
-            // Condições de disparo
             if (ordem.tipoOrdem === 'compra' && precoAtual <= ordem.precoReferencia) {
                 dispararGatilho = true;
             } else if (ordem.tipoOrdem === 'venda' && precoAtual >= ordem.precoReferencia) {
@@ -32,7 +29,6 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
             }
 
             if (dispararGatilho) {
-                // Busca o dono específico desta ordem que acabou de disparar
                 const usuario = await Usuario.findById(ordem.usuario);
                 if (!usuario) {
                     ordem.status = 'falhada';
@@ -114,7 +110,6 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
     }
 }
 
-// Retorna o tempo do sistema 
 const pegarTempo = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -131,7 +126,6 @@ const pegarTempo = async (req, res) => {
     }
 };
 
-// Avança o tempo no banco de dados e dispara a automatização
 const avancarTempo = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -142,21 +136,15 @@ const avancarTempo = async (req, res) => {
             return res.status(400).json({ erro: "Quantidade de minutos inválida para o avanço." });
         }
 
-        // Busca o relógio no banco
         let mercado = await Mercado.findOne();
         if (!mercado) {
             mercado = await Mercado.create({ minutoAtual: 0 });
         }
 
-        // Avança o relógio global
         mercado.minutoAtual += Number(minutos);
-        
-        // Proteção para não passar do limite de 59 minutos da simulação
         if (mercado.minutoAtual > 59) mercado.minutoAtual = 59; 
         
         await mercado.save();
-
-        // Dispara o processamento para todos
         await processarOrdensCondicionaisAgendadas(mercado.minutoAtual);
 
         return res.status(200).json({
@@ -168,7 +156,6 @@ const avancarTempo = async (req, res) => {
     }
 };
 
-// Adiciona uma ação na lista de interesse do usuário logado
 const adicionarAcaoInteresse = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -191,7 +178,6 @@ const adicionarAcaoInteresse = async (req, res) => {
     }
 };
 
-// Remove uma ação da lista do usuário logado
 const removerAcaoInteresse = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -216,7 +202,7 @@ const removerAcaoInteresse = async (req, res) => {
     }
 };
 
-// Lista as ações do usuário buscando o último preço válido
+// Listagem de acoes de interesse com as variações
 const listarAcoesInteresse = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -226,16 +212,23 @@ const listarAcoesInteresse = async (req, res) => {
         let mercado = await Mercado.findOne();
         const minutoGlobal = mercado ? mercado.minutoAtual : 0;
         
-        // Procura as ações favoritadas
+        // Procura as ações favoritadas pelo usuário
         const minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });
         const meusTickers = minhasAcoesSalvas.map(a => a.ticker);
+
+        // Busca os preços de fechamento do dia anterior para calcular a variação
+        let dadosFechamentoGeral = [];
+        try {
+            dadosFechamentoGeral = await precosService.obterFechamentoDiario();
+        } catch (err) {
+            console.error(" Falha ao carregar tickers.json, variações usarão fallback:", err.message);
+        }
 
         const acoesParaATela = [];
 
         // Para cada ação favoritada, procura o preço no minuto atual ou vai voltando no tempo
         for (let ticker of meusTickers) {
             let precoEncontrado = null;
-            let cotacaoCompleta = null;
             
             for (let m = minutoGlobal; m >= 0; m--) {
                 const precosHistoricos = await precosService.obterPrecosPorMinuto(m);
@@ -243,15 +236,27 @@ const listarAcoesInteresse = async (req, res) => {
                 
                 if (cotacao) {
                     precoEncontrado = cotacao.preco;
-                    cotacaoCompleta = cotacao; // Guarda todo o objeto caso o front precise
                     break; 
                 }
             }
 
             if (precoEncontrado !== null) {
+                // Trocado fechamentosDiarios por dadosFechamentoGeral
+                const fechamentoAcao = dadosFechamentoGeral.find(f => f.ticker === ticker);
+                
+                // Convertendo para Number de forma segura antes da matemática
+                const precoFechamento = fechamentoAcao ? Number(fechamentoAcao.fechamento) : Number(precoEncontrado);
+                const precoAtual = Number(precoEncontrado);
+
+                // Matemática de variações 
+                const variacaoNominal = precoAtual - precoFechamento;
+                const variacaoPercentual = precoFechamento > 0 ? (variacaoNominal / precoFechamento) * 100 : 0;
+
                 acoesParaATela.push({
                     ticker: ticker,
-                    preco: precoEncontrado
+                    preco: precoAtual.toFixed(2),
+                    variacaoNominal: variacaoNominal.toFixed(2), 
+                    variacaoPercentual: variacaoPercentual.toFixed(2) 
                 });
             }
         }
