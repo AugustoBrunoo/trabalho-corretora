@@ -189,6 +189,12 @@ const listarOrdensPendentes = async (req, res) => {
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado." });
 
         const pendentes = await Ordem.find({ usuario: claims.user_id, status: 'pendente' });
+        
+        // feedback para caso a lista de pendentes esteja vazia
+        if (pendentes.length === 0) {
+            return res.status(200).json({ mensagem: "Você não possui ordens pendentes no momento." });
+        }
+
         return res.status(200).json(pendentes);
     } catch (erro) {
         return res.status(500).json({ erro: "Erro ao listar ordens pendentes.", detalhes: erro.message });

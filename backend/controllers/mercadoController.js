@@ -208,11 +208,46 @@ const listarAcoesInteresse = async (req, res) => {
         if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
         // Pega o tempo global
-        let mercado = await Mercado.findOne();
-        const minutoGlobal = mercado ? mercado.minutoAtual : 0;
+        const minutoGlobal = await mercadoService.obterMinutoGlobal();
         
         // Procura as ações favoritadas pelo usuário
-        const minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });
+        let minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });
+
+        // Inicializa 10 ações aleatórias se o usuário não tiver 10 ainda
+        if (minhasAcoesSalvas.length < 10) {
+            try {
+                const dadosFechamentoGeral = await precosService.obterFechamentoDiario();
+                if (dadosFechamentoGeral && dadosFechamentoGeral.length > 0) {
+                    // Mapeia os tickers que o usuário já possui salvos
+                    const tickersExistentes = minhasAcoesSalvas.map(a => a.ticker.toUpperCase());
+                    
+                    // Filtra apenas as ações do mercado que ele AINDA NÃO possui
+                    const disponiveis = dadosFechamentoGeral.filter(f => !tickersExistentes.includes(f.ticker.toUpperCase()));
+                    
+                    // Embaralha o array de ações disponíveis aleatoriamente
+                    const embaralhado = disponiveis.sort(() => 0.5 - Math.random());
+                    
+                    // Define a quantidade que falta para atingir 10 ações no total
+                    const quantasFaltam = 10 - minhasAcoesSalvas.length;
+                    const selecionadas = embaralhado.slice(0, quantasFaltam);
+
+                    if (selecionadas.length > 0) {
+                        // Faz a inserção em lote no MongoDB
+                        await AcaoInteresse.insertMany(
+                            selecionadas.map(s => ({
+                                usuario: claims.user_id,
+                                ticker: s.ticker.toUpperCase()
+                            }))
+                        );
+                        // Atualiza a busca local do banco de dados com os novos registros inclusos
+                        minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });
+                    }
+                }
+            } catch (err) {
+                console.error("Falha ao injetar ações aleatórias de interesse:", err.message);
+            }
+        }
+
         const meusTickers = minhasAcoesSalvas.map(a => a.ticker);
 
         // Busca os preços de fechamento do dia anterior para calcular a variação
