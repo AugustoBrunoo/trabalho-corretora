@@ -1,16 +1,35 @@
 @import "tailwindcss";
 
-/* O Tailwind v4 detecta automaticamente seus arquivos .vue, 
-então você não precisa de mais nada aqui por enquanto. */
+/* O Tailwind v4 detecta automaticamente seus arquivos .vue */
 
+/* Configurações Customizadas de Tema (Substitui o antigo tailwind.config.js) */
+@theme {
+  /* Paleta Amarela PrimeInvest */
+  --color-prime-400: #FACC15;
+  --color-prime-500: #EAB308;
+  --color-prime-600: #CA8A04;
+  
+  /* Paleta Slate */
+  --color-slate-850: #151e2e;
+  --color-slate-900: #0F172A;
+  --color-slate-950: #0B0F19;
+
+  /* Animação do letreiro de ações */
+  --animate-marquee: marquee 30s linear infinite;
+
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+  }
+}
+
+/* Seus utilitários e keyframes extras */
 @layer utilities {
   @keyframes blink {
-
     0%,
     100% {
       background-color: transparent;
     }
-
     50% {
       background-color: rgba(34, 197, 94, 0.4);
     }

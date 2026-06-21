@@ -6,14 +6,27 @@ export default {
     ],
     theme: {
         extend: {
-            keyframes: {
-                blink: {
-                    '0%, 100%': { backgroundColor: 'transparent' },
-                    '50%': { backgroundColor: 'rgba(34, 197, 94, 0.4)' },
+            fontFamily: {
+                sans: ['Inter', 'sans-serif'],
+            },
+            colors: {
+                prime: {
+                    400: '#FACC15',
+                    500: '#EAB308',
+                    600: '#CA8A04',
+                },
+                slate: {
+                    850: '#151e2e',
                 }
             },
             animation: {
-                blink: 'blink 1s ease-in-out'
+                'marquee': 'marquee 30s linear infinite',
+            },
+            keyframes: {
+                marquee: {
+                    '0%': { transform: 'translateX(0%)' },
+                    '100%': { transform: 'translateX(-100%)' },
+                }
             }
         },
     },

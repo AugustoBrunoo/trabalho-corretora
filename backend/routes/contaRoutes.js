@@ -7,4 +7,6 @@ router.post('/deposito', verifyToken, contaController.depositar);
 router.post('/retirada', verifyToken, contaController.retirada);
 router.get('/transacoes', verifyToken, contaController.listarTransacoes);
 
+router.get('/resumo', verifyToken, contaController.resumoConta);
+
 module.exports = router;

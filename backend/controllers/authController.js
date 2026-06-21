@@ -31,13 +31,13 @@ const registrar = async (req, res) => {
         if (!verificaEmailValido(email)) {
             return res.status(400).json({ message: "O e-mail do usuário não está em um formato adequado." });
         }
-        
+
         // Busca no MongoDB se o e-mail já existe
         const usuarioExistente = await Usuario.findOne({ email: email });
         if (usuarioExistente) {
             return res.status(400).json({ message: "Já existe um usuário registrado com este e-mail." });
         }
-        
+
         if (!verificaSenhaValida(senha)) {
             return res.status(400).json({ message: "A senha do usuário não é válida. Mínimo 8 caracteres, contendo letras e números." });
         }
@@ -46,7 +46,7 @@ const registrar = async (req, res) => {
         }
 
         const senhaCriptografada = await bcrypt.hash(senha, 10);
-        
+
         // Cria o usuário no MongoDB e guarda a resposta para pegar o _id
         const novoUsuario = await Usuario.create({ nome, email, senha: senhaCriptografada });
 
@@ -56,16 +56,16 @@ const registrar = async (req, res) => {
         try {
             // Pega as ações do minuto 0 para ter a lista completa
             const todosOsAtivos = await precosService.obterPrecosPorMinuto(0);
-            
+
             // Embaralha a lista
             const ativosEmbaralhados = todosOsAtivos.sort(() => 0.5 - Math.random());
-            
+
             // Pega apenas as 10 primeiras
             const dezAcoesAleatorias = ativosEmbaralhados.slice(0, 10);
-            
+
             // Prepara os objetos para salvar no banco vinculados ao novo usuário
             const acoesParaSalvar = dezAcoesAleatorias.map(acao => ({
-                usuario: novoUsuario._id, 
+                usuario: novoUsuario._id,
                 ticker: acao.ticker.toUpperCase()
             }));
 
@@ -138,10 +138,13 @@ const esqueciSenha = async (req, res) => {
         const tokenRecuperacao = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
 
         usuario.tokenSenha = tokenRecuperacao;
-        usuario.dataTokenSenha = new Date(); 
+        usuario.dataTokenSenha = new Date();
         await usuario.save(); // Salva a alteração no banco
 
-        const urlSimulada = `http://localhost:3000/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
+        // const urlSimulada = `http://localhost:3000/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
+
+        // ALTERADO: Agora aponta para a porta 5173 do seu Frontend Vite
+        const urlSimulada = `http://localhost:5173/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
 
         return res.status(200).json({
             message: "Simulação: Token de recuperação gerado com sucesso!",
@@ -209,7 +212,7 @@ const trocaSenhaLogado = async (req, res) => {
             return res.status(401).json({ message: "Acesso não autorizado. Faça login primeiro." });
         }
 
-        const userId = claims.user_id; 
+        const userId = claims.user_id;
 
         //  Busca pelo ID do MongoDB (_id)
         const usuario = await Usuario.findById(userId);

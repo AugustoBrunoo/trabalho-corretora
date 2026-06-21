@@ -1,7 +1,8 @@
-const Transacao = require('../models/transacaoModel'); 
+const Transacao = require('../models/transacaoModel');
 const Usuario = require('../models/usuarioModel');
 const Mercado = require('../models/mercadoModel');
 const mercadoService = require('../services/mercadoService');
+const AcaoInteresse = require('../models/acaoInteresseModel');
 const auth = require('../auth/auth');
 
 // Lógica para depositar
@@ -10,9 +11,9 @@ const depositar = async (req, res) => {
         // Identifica o usuário logado pelo Token JWT
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
-        
+
         const userId = claims.user_id;
-        const { valor, descricao } = req.body; 
+        const { valor, descricao } = req.body;
 
         if (!valor || isNaN(valor) || valor <= 0) {
             return res.status(400).json({ erro: "O valor do depósito deve ser um número maior que zero." });
@@ -40,7 +41,7 @@ const depositar = async (req, res) => {
             tipo: 'deposito',
             valor: Number(valor),
             descricao: descricao.trim(),
-            minutoSimulacao: minutoGlobal, 
+            minutoSimulacao: minutoGlobal,
             saldoResultante: usuario.saldoGeral   // Saldo histórico após o depósito
         });
 
@@ -61,7 +62,7 @@ const retirar = async (req, res) => {
         // Identifica o usuário logado pelo Token JWT
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Acesso não autorizado. Faça login primeiro." });
-        
+
         const userId = claims.user_id;
         const { valor, descricao } = req.body;
 
@@ -80,9 +81,9 @@ const retirar = async (req, res) => {
 
         // Verifica se o usuário tem saldo suficiente no banco de dados
         if (Number(valor) > usuario.saldoGeral) {
-            return res.status(400).json({ 
-                erro: "Saldo insuficiente para esta retirada.", 
-                saldoAtual: usuario.saldoGeral 
+            return res.status(400).json({
+                erro: "Saldo insuficiente para esta retirada.",
+                saldoAtual: usuario.saldoGeral
             });
         }
 
@@ -134,7 +135,7 @@ const listarTransacoes = async (req, res) => {
         const transacoes = await Transacao.find({ usuario: userId }).sort({ createdAt: 1 });
 
         // pega o minuto global
-       const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        const minutoGlobal = await mercadoService.obterMinutoGlobal();
 
         return res.status(200).json({
             saldoAtual: usuario.saldoGeral,
@@ -147,8 +148,38 @@ const listarTransacoes = async (req, res) => {
     }
 };
 
+const resumoConta = async (req, res) => {
+    try {
+        // O token é decodificado pelo middleware verifyToken e injetado no req.user
+        // Se o seu middleware salva diferente (ex: req.user_id), ajuste para bater com o seu auth.js
+        const userId = req.user.user_id || req.user._id;
+
+        // 1. Busca os dados do usuário no MongoDB para pegar o saldo
+        const usuario = await Usuario.findById(userId);
+        if (!usuario) {
+            return res.status(404).json({ message: "Usuário não encontrado." });
+        }
+
+        // 2. Busca as ações que pertencem a este usuário
+        // Usando o AcaoInteresse que você preencheu no momento do registro
+        const acoesDoUsuario = await AcaoInteresse.find({ usuario: userId });
+
+        // 3. Monta o objeto de resposta exatamente com os nomes que o Vue 3 está esperando
+        return res.status(200).json({
+            saldoGeral: usuario.saldoGeral,
+            patrimonioInvestido: 0, // Mockado por enquanto (depois você faz a matemática de Preço x Quantidade)
+            acoes: acoesDoUsuario
+        });
+
+    } catch (erro) {
+        console.error("Erro no resumo da conta:", erro);
+        return res.status(500).json({ message: "Erro no servidor ao buscar resumo da conta." });
+    }
+};
+
 module.exports = {
     depositar,
-    retirada: retirar, 
-    listarTransacoes
+    retirada: retirar,
+    listarTransacoes,
+    resumoConta
 };
