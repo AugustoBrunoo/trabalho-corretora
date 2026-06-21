@@ -7,6 +7,7 @@ import RecuperarSenhaView from '../views/RecuperarSenhaView.vue'
 import NovaSenhaView from '../views/NovaSenhaView.vue'
 import DashboardHBView from '../views/DashboardHBView.vue'
 import ContaCorrenteHBView from '../views/ContaCorrenteHBView.vue'
+import MinhaCarteiraHBView from '../views/MinhaCarteiraHBView.vue'
 
 
 const routes = [
@@ -52,6 +53,12 @@ const routes = [
         path: '/conta-corrente',
         name: 'Conta Corrente',
         component: ContaCorrenteHBView, // Importe do jeito que preferir
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/carteira',
+        name: 'Carteira',
+        component: MinhaCarteiraHBView,
         meta: { requiresAuth: true }
     }
 ]
