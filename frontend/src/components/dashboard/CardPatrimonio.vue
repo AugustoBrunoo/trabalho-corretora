@@ -33,7 +33,7 @@
             </div>
         </div>
         <div class="relative z-10 mt-8 pt-6 border-t border-slate-700/60 flex flex-wrap gap-3">
-            <button @click="abrirModalTransacao('deposito')"
+            <button  @click="$emit('transacao', 'deposito')" 
                 class="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 rounded-xl text-sm font-bold text-white transition-colors shadow-lg shadow-emerald-500/20">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
@@ -43,7 +43,7 @@
                 </svg>
                 Depositar
             </button>
-            <button @click="abrirModalTransacao('retirada')"
+            <button @click="$emit('transacao', 'retirada')" 
                 class="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-sm font-bold text-white transition-colors shadow-lg">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 text-slate-300">
