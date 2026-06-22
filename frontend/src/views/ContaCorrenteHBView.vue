@@ -183,7 +183,7 @@
                             class="bg-[#0B0F19] border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-2 flex-1 sm:flex-none justify-center">
                             <i data-lucide="clock" class="w-3.5 h-3.5 text-prime-500"></i>
                             <span class="text-xs text-slate-400 font-medium">Relógio: Min <span class="text-white">{{
-                                    minutoAtual }}</span></span>
+                                minutoAtual }}</span></span>
                         </div>
                     </div>
                 </div>
@@ -306,7 +306,7 @@
                                     class="w-4 h-4 animate-spin"></i>
                                 <i v-else data-lucide="check" class="w-4 h-4"></i>
                                 {{ isProcessandoTransacao ? 'Processando...' : (transacao.tipo === 'deposito' ?
-                                'Confirmar Depósito' : 'Confirmar Retirada') }}
+                                    'Confirmar Depósito' : 'Confirmar Retirada') }}
                             </button>
                         </div>
                     </form>
@@ -490,6 +490,12 @@ const enviarTransacao = async () => {
 const gerarPDFExtrato = () => {
     if (transacoes.value.length === 0) return
 
+    // VALIDAÇÃO DINÂMICA
+    if (!window.html2pdf) {
+        mostrarToast("Aguarde, a biblioteca de PDF ainda está sendo carregada na página...", "info")
+        return
+    }
+
     mostrarToast("Gerando PDF, aguarde...", "info")
 
     const agora = new Date()
@@ -553,7 +559,7 @@ const gerarPDFExtrato = () => {
     `
     elementoDocumento.innerHTML = html
 
-    // Assumindo que html2pdf foi importado globalmente via script tag no index.html
+    // Assumindo que html2pdf foi injetado pelo Vue ou já está na janela global
     if (window.html2pdf) {
         window.html2pdf().set({
             margin: 10,
@@ -565,7 +571,7 @@ const gerarPDFExtrato = () => {
             mostrarToast("PDF do extrato gerado com sucesso!", "sucesso")
         })
     } else {
-        mostrarToast("Biblioteca de PDF não carregada.", "erro")
+        mostrarToast("Biblioteca de PDF falhou ao processar o documento.", "erro")
     }
 }
 
@@ -580,6 +586,14 @@ const efetuarLogout = () => {
 // ==========================================
 onMounted(() => {
     fetchTransacoes()
+
+    // INJEÇÃO AUTOMÁTICA DA BIBLIOTECA DE PDF SEM PRECISAR DE NPM!
+    if (!window.html2pdf) {
+        const script = document.createElement('script')
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js'
+        script.async = true
+        document.head.appendChild(script)
+    }
 })
 
 onUpdated(() => {

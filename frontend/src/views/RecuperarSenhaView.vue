@@ -23,7 +23,11 @@
 
                     <router-link to="/login"
                         class="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-white transition-colors">
-                        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                            <path d="m12 19-7-7 7-7" />
+                            <path d="M19 12H5" />
+                        </svg>
                         Voltar para Login
                     </router-link>
                 </div>
@@ -39,7 +43,12 @@
                         <div class="text-center mb-8">
                             <div
                                 class="w-16 h-16 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-700/50">
-                                <i data-lucide="key-round" class="w-8 h-8 text-prime-500"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="w-8 h-8 text-prime-500">
+                                    <path d="M2 18v3c0 .6.4 1 1 1h4v-3h3v-3h2l1.4-1.4a6.5 6.5 0 1 0-4-4Z" />
+                                    <circle cx="16.5" cy="7.5" r=".5" fill="currentColor" />
+                                </svg>
                             </div>
                             <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">Recuperar Senha</h1>
                             <p class="text-slate-400 text-sm px-4">
@@ -53,7 +62,13 @@
 
                             <div v-if="errorMessage"
                                 class="mb-5 bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start gap-3">
-                                <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" x2="12" y1="8" y2="12" />
+                                    <line x1="12" x2="12.01" y1="16" y2="16" />
+                                </svg>
                                 <p class="text-sm text-red-200">{{ errorMessage }}</p>
                             </div>
 
@@ -63,7 +78,12 @@
                                         de E-mail</label>
                                     <div class="relative input-fintech rounded-lg flex items-center">
                                         <div class="pl-4 text-slate-500">
-                                            <i data-lucide="mail" class="w-5 h-5"></i>
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round" class="w-5 h-5">
+                                                <rect width="20" height="16" x="2" y="4" rx="2" />
+                                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                            </svg>
                                         </div>
                                         <input v-model="email" type="email" id="email"
                                             class="w-full bg-transparent border-none text-white px-3 py-3.5 focus:outline-none placeholder-slate-600 text-sm"
@@ -86,7 +106,12 @@
                                     </template>
                                     <template v-else>
                                         <span>Enviar Instruções</span>
-                                        <i data-lucide="send" class="w-4 h-4"></i>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" class="w-4 h-4">
+                                            <path d="m22 2-7 20-4-9-9-4Z" />
+                                            <path d="M22 2 11 13" />
+                                        </svg>
                                     </template>
                                 </button>
                             </form>
@@ -98,24 +123,20 @@
                             class="bg-[#0F172A]/90 backdrop-blur-md border border-prime-500/30 rounded-2xl shadow-[0_0_40px_-10px_rgba(234,179,8,0.2)] p-8 sm:p-10">
                             <div
                                 class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
-                                <i data-lucide="mail-check" class="w-10 h-10 text-emerald-500"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="w-10 h-10 text-emerald-500">
+                                    <rect width="20" height="16" x="2" y="4" rx="2" />
+                                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                                    <path d="m16 19 2 2 4-4" />
+                                </svg>
                             </div>
                             <h2 class="text-2xl font-bold text-white mb-3">E-mail Enviado!</h2>
                             <p class="text-slate-400 text-sm mb-8 leading-relaxed">
                                 Acabamos de enviar um link de recuperação para <br>
                                 <strong class="text-white font-medium">{{ email }}</strong><br>
-                                Verifique sua caixa de entrada e a pasta de spam.
+                                Verifique sua caixa de entrada e a pasta de spam. O link expira em 1 hora.
                             </p>
-
-                            <div v-if="devUrl"
-                                class="mb-8 p-4 bg-slate-900 rounded-lg border border-slate-700 text-left">
-                                <p class="text-xs text-prime-500 font-bold mb-2 uppercase tracking-wider">Apenas para
-                                    Teste Dev:</p>
-                                <a :href="devUrl" target="_blank"
-                                    class="text-sm text-blue-400 hover:text-blue-300 break-all underline">
-                                    {{ devUrl }}
-                                </a>
-                            </div>
 
                             <router-link to="/login"
                                 class="inline-block w-full bg-transparent border border-slate-700 hover:bg-slate-800 text-white font-medium py-3.5 px-4 rounded-lg transition-colors">
@@ -136,7 +157,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref } from 'vue'
 import axios from 'axios'
 
 // Estados Reativos do Componente
@@ -144,12 +165,10 @@ const email = ref('')
 const isLoading = ref(false)
 const errorMessage = ref('')
 const isSuccess = ref(false)
-const devUrl = ref('') // Guarda a URL de recuperação que o Node.js envia
 
 // 🔗 URL de Integração configurada no authRoutes.js
 const API_URL = 'http://localhost:3000/api/auth/esqueci'
 
-// Expressão Regular idêntica à do authController.js para evitar requisições nulas
 const verificaEmailValido = (emailTest) => {
     if (!emailTest) return false
     return /^[A-Za-z0-9._%-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,4}$/.test(emailTest)
@@ -159,7 +178,6 @@ const verificaEmailValido = (emailTest) => {
 // INTEGRAÇÃO COM O BACKEND NODE.JS
 // ==========================================
 const handleRecuperacao = async () => {
-    // 1. Limpa erros antigos e verifica e-mail no frontend
     errorMessage.value = ''
 
     if (!verificaEmailValido(email.value.trim())) {
@@ -170,52 +188,26 @@ const handleRecuperacao = async () => {
     isLoading.value = true
 
     try {
-        // 2. Faz o POST para o servidor enviando exatamente o objeto que o controller aguarda: { email: "..." }
-        const response = await axios.post(API_URL, {
+        await axios.post(API_URL, {
             email: email.value.trim()
         })
 
-        // 3. Sucesso! O authController.js gera o token, salva no banco e retorna um objeto com 'urlAcessoFrontend'.
-        // Capturamos essa URL para exibi-la na caixinha de testes de desenvolvedor.
-        if (response.data && response.data.urlAcessoFrontend) {
-            devUrl.value = response.data.urlAcessoFrontend
-        }
-
-        // 4. Troca o componente visual para a tela verde de sucesso
+        // Apenas diz que foi sucesso. A URL não vem mais para cá, foi para o e-mail!
         isSuccess.value = true
-
-        // Força a renderização dos novos ícones da tela de sucesso (ex: mail-check)
-        nextTick(() => {
-            if (window.lucide) window.lucide.createIcons()
-        })
 
     } catch (error) {
         console.error("Erro na requisição de recuperação:", error)
 
-        // 5. Tratamento de Erros. Se o usuário não existir, o backend manda o status 400
-        // e a mensagem "Não foi encontrado um usuário com este e-mail."
         if (error.response && error.response.data && error.response.data.message) {
             errorMessage.value = error.response.data.message
         } else {
             errorMessage.value = "Erro interno no servidor ao tentar recuperar a senha."
         }
 
-        // Força a renderização do ícone de erro
-        nextTick(() => {
-            if (window.lucide) window.lucide.createIcons()
-        })
-
     } finally {
         isLoading.value = false
     }
 }
-
-// Renderiza os ícones iniciais (envelope, seta de voltar) quando a tela carrega
-onMounted(() => {
-    nextTick(() => {
-        if (window.lucide) window.lucide.createIcons()
-    })
-})
 </script>
 
 <style scoped>
@@ -230,7 +222,6 @@ onMounted(() => {
     box-shadow: 0 0 0 1px #EAB308;
 }
 
-/* Transição suave entre o form e a tela de sucesso */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
     transition: all 0.4s ease;

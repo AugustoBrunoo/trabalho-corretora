@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const Usuario = require('../models/usuarioModel');
 const AcaoInteresse = require('../models/acaoInteresseModel');
 const precosService = require('../services/precosService');
+const nodemailer = require('nodemailer'); // Certifique-se de ter o require do nodemailer no topo do arquivo
+
 
 // Chave secreta usada pelo jwt.sign aqui e pelo auth.js na verificação (Assinatura)
 const TOKEN_KEY = process.env.TOKEN_KEY;
@@ -121,42 +123,6 @@ const login = async (req, res) => {
     }
 };
 
-// SOLICITAR RECUPERAÇÃO DE SENHA (ESQUECI A SENHA - DESLOGADO)
-const esqueciSenha = async (req, res) => {
-    try {
-        const { email } = req.body;
-
-        if (!verificaEmailValido(email)) {
-            return res.status(400).json({ message: "O e-mail do usuário não está em um formato adequado." });
-        }
-
-        const usuario = await Usuario.findOne({ email: email });
-        if (!usuario) {
-            return res.status(400).json({ message: "Não foi encontrado um usuário com este e-mail." });
-        }
-
-        const tokenRecuperacao = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-
-        usuario.tokenSenha = tokenRecuperacao;
-        usuario.dataTokenSenha = new Date();
-        await usuario.save(); // Salva a alteração no banco
-
-        // const urlSimulada = `http://localhost:3000/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
-
-        // ALTERADO: Agora aponta para a porta 5173 do seu Frontend Vite
-        const urlSimulada = `http://localhost:5173/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
-
-        return res.status(200).json({
-            message: "Simulação: Token de recuperação gerado com sucesso!",
-            DICA_PARA_TESTE: "Copie o tokenSenha abaixo para usar no próximo teste (/reset)",
-            tokenSenha: tokenRecuperacao,
-            urlAcessoFrontend: urlSimulada
-        });
-    } catch (erro) {
-        return res.status(500).json({ message: "Erro no servidor ao solicitar nova senha.", detalhes: erro.message });
-    }
-};
-
 //  RESETAR A SENHA USANDO O TOKEN RECEBIDO (DESLOGADO)
 const resetarSenha = async (req, res) => {
     try {
@@ -236,10 +202,86 @@ const trocaSenhaLogado = async (req, res) => {
 
         usuario.senha = await bcrypt.hash(senhaNova, 10);
         await usuario.save(); // Salva a alteração no banco
-
+        
         return res.status(200).json({ message: "Nova senha registrada com sucesso!" });
     } catch (erro) {
         return res.status(500).json({ message: "Erro no servidor ao trocar senha logado.", detalhes: erro.message });
+    }
+};
+
+// SOLICITAR RECUPERAÇÃO DE SENHA (MODO SANDBOX - ACEITA QUALQUER E-MAIL)
+const esqueciSenha = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!verificaEmailValido(email)) {
+            return res.status(400).json({ message: "O e-mail do usuário não está em um formato adequado." });
+        }
+
+        const usuario = await Usuario.findOne({ email: email });
+        if (!usuario) {
+            return res.status(400).json({ message: "Não foi encontrado um usuário com este e-mail." });
+        }
+
+        // Mantém a geração do seu token padrão do sistema
+        const tokenRecuperacao = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+
+        usuario.tokenSenha = tokenRecuperacao;
+        usuario.dataTokenSenha = new Date();
+        await usuario.save(); 
+
+        const urlSimulada = `http://localhost:5173/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
+
+        // =========================================================================
+        // CONFIGURAÇÃO DO TRANSPORTER VIA SMTP SANDBOX (PEGA QUALQUER DESTINATÁRIO)
+        // =========================================================================
+        const transporter = nodemailer.createTransport({
+            host: "sandbox.smtp.mailtrap.io",
+            port: 2525,
+            auth: {
+                // Vá na aba "SMTP Settings" da sua Inbox no Mailtrap e pegue esses dois valores:
+                user: "89321183079fb4", 
+                pass: "9b827640a1b595"  
+            }
+        });
+
+        const mailOptions = {
+            from: '"Suporte PrimeInvest" <suporte@primeinvest.com>', // Aqui você pode colocar o e-mail que quiser!
+            to: usuario.email, // Agora aceita qualquer e-mail digitado no banco!
+            subject: "🔒 Recuperação de Senha - PrimeInvest",
+            html: `
+                <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; background-color: #0F172A; padding: 40px; border-radius: 12px; color: #F8FAFC;">
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h1 style="color: #EAB308; margin: 0; font-size: 28px;">Prime<span style="color: #FFFFFF;">Invest</span></h1>
+                    </div>
+                    <h2 style="color: #FFFFFF; font-size: 20px; margin-bottom: 15px;">Olá, ${usuario.nome.split(' ')[0]}!</h2>
+                    <p style="color: #94A3B8; font-size: 15px; line-height: 1.6;">Recebemos uma solicitação para redefinir a senha da sua conta PrimeInvest.</p>
+                    <p style="color: #94A3B8; font-size: 15px; line-height: 1.6;">Clique no botão dourado abaixo para escolher uma nova senha de acesso. Este link é seguro e expira em breve.</p>
+                    
+                    <div style="text-align: center; margin: 35px 0;">
+                        <a href="${urlSimulada}" style="display: inline-block; background-color: #EAB308; color: #0B0F19; text-decoration: none; font-weight: bold; font-size: 15px; padding: 14px 28px; border-radius: 8px;">
+                            Criar Nova Senha
+                        </a>
+                    </div>
+                    
+                    <p style="color: #64748B; font-size: 12px; text-align: center; border-top: 1px solid #1E293B; padding-top: 20px; margin-top: 30px;">
+                        Se você não solicitou a alteração de senha, ignore este e-mail por segurança.
+                    </p>
+                </div>
+            `
+        };
+
+        // Envia o e-mail usando o nodemailer padrão
+        await transporter.sendMail(mailOptions);
+        // =========================================================================
+
+        return res.status(200).json({
+            message: "As instruções de recuperação foram enviadas para a sua caixa de entrada com sucesso!"
+        });
+
+    } catch (erro) {
+        console.error("Erro no servidor ao processar esqueciSenha:", erro.message);
+        return res.status(500).json({ message: "Erro no servidor ao solicitar nova senha.", detalhes: erro.message });
     }
 };
 

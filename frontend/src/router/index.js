@@ -8,6 +8,7 @@ import NovaSenhaView from '../views/NovaSenhaView.vue'
 import DashboardHBView from '../views/DashboardHBView.vue'
 import ContaCorrenteHBView from '../views/ContaCorrenteHBView.vue'
 import MinhaCarteiraHBView from '../views/MinhaCarteiraHBView.vue'
+import MercadoHBView from '../views/MercadoHBView.vue'
 
 
 const routes = [
@@ -59,6 +60,12 @@ const routes = [
         path: '/carteira',
         name: 'Carteira',
         component: MinhaCarteiraHBView,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/mercado',
+        name: 'Mercado',
+        component: MercadoHBView,
         meta: { requiresAuth: true }
     }
 ]

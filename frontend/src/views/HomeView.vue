@@ -23,7 +23,7 @@
                             class="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">Vantagens</a>
                         <a href="#ecossistema" @click.prevent="scrollToSection('ecossistema')"
                             class="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">Ecossistema</a>
-                            
+
                         <router-link to="/equipe"
                             class="text-sm font-medium text-slate-400 hover:text-white transition-colors cursor-pointer">Equipe</router-link>
 
@@ -462,7 +462,7 @@
                         Plataforma com fins estritamente educacionais.
                     </p>
                     <div class="flex gap-4">
-                        <a href="#" class="text-slate-500 hover:text-white transition-colors">
+                        <a href="https://github.com/AugustoBrunoo/trabalho-corretora" class="text-slate-500 hover:text-white transition-colors">
                             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                                 stroke-linecap="round" stroke-linejoin="round">
                                 <path

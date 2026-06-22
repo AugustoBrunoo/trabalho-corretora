@@ -349,7 +349,21 @@
 
                             <div
                                 class="w-20 h-20 bg-prime-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-prime-500/20">
-                                <i data-lucide="party-popper" class="w-10 h-10 text-prime-500"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="w-10 h-10 text-prime-500">
+                                    <path d="M5.8 11.3 2 22l10.7-3.79" />
+                                    <path d="M4 3h.01" />
+                                    <path d="M22 8h.01" />
+                                    <path d="M15 2h.01" />
+                                    <path d="M22 20h.01" />
+                                    <path
+                                        d="m22 2-2.24.75a2.9 2.9 0 0 0-1.96 3.12v0c.1.86-.57 1.63-1.45 1.63h-.38c-.86 0-1.6.6-1.76 1.44L14 10" />
+                                    <path d="m22 13-.82-.33c-.86-.31-1.82.2-1.98 1.11v0c-.11.7-.72 1.22-1.43 1.22H17" />
+                                    <path d="m11 2 .33.82c.31.86-.2 1.82-1.11 1.98v0C9.52 4.9 9 5.52 9 6.23V7" />
+                                    <path
+                                        d="M11 13c1.93 1.93 2.83 4.17 2 5-.83.83-3.07-.07-5-2-1.93-1.93-2.83-4.17-2-5 .83-.83 3.07.07 5 2Z" />
+                                </svg>
                             </div>
                             <h2 class="text-2xl font-bold text-white mb-3">Conta Criada!</h2>
 
@@ -361,7 +375,16 @@
                                 </p>
                                 <div
                                     class="flex items-start gap-3 p-3 bg-prime-500/5 border border-prime-500/20 rounded-lg">
-                                    <i data-lucide="gift" class="w-5 h-5 text-prime-500 flex-shrink-0 mt-0.5"></i>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" class="w-5 h-5 text-prime-500 flex-shrink-0 mt-0.5">
+                                        <polyline points="20 12 20 22 4 22 4 12" />
+                                        <rect width="20" height="5" x="2" y="7" />
+                                        <line x1="12" x2="12" y1="22" y2="7" />
+                                        <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+                                        <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                                    </svg>
+
                                     <p class="text-xs text-slate-400">
                                         <strong class="text-prime-400">Bônus de Início:</strong> Nosso sistema acabou de
                                         sortear e adicionar
@@ -374,8 +397,13 @@
 
                             <router-link to="/login"
                                 class="inline-flex w-full justify-center bg-prime-500 hover:bg-prime-400 text-slate-900 font-semibold py-3.5 px-4 rounded-lg transition-colors shadow-lg shadow-prime-500/20 items-center gap-2">
-                                <span>Acessar Plataforma</span>
-                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                                <span>Fazer Login</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="w-4 h-4">
+                                    <line x1="5" y1="12" x2="19" y2="12" />
+                                    <polyline points="12 5 19 12 12 19" />
+                                </svg>
                             </router-link>
                         </div>
                     </div>
@@ -409,25 +437,19 @@ const isSuccess = ref(false)
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
 
-// 🔗 Conexão com Endpoint Oficial configurado no authRoutes.js do seu backend
 const API_URL = 'http://localhost:3000/api/auth/registro'
 
-// Expressões Regulares fornecidas para validações
 const regexLetra = /.*[a-zA-Z].*/
 const regexNumero = /.*[0-9].*/
 const regexEmail = /^[A-Za-z0-9._%-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,4}$/
 
-// --- LÓGICA DE VALIDAÇÃO REATIVA (COMPUTED) ---
-
 const isNomeValid = computed(() => registerData.nome.trim().length > 0)
 const isEmailValid = computed(() => regexEmail.test(registerData.email.trim()))
-
 const isLengthValid = computed(() => registerData.senha.length >= 8)
 const isLetterValid = computed(() => regexLetra.test(registerData.senha))
 const isNumberValid = computed(() => regexNumero.test(registerData.senha))
 const isMatchValid = computed(() => registerData.senha === registerData.senhaRepetida && registerData.senha !== '')
 
-// Desbloqueia o botão de submit apenas se todas as regras de negócio forem atendidas
 const isFormValid = computed(() => {
     return isNomeValid.value &&
         isEmailValid.value &&
@@ -438,7 +460,6 @@ const isFormValid = computed(() => {
         registerData.termos
 })
 
-// Processa dinamicamente a força da senha baseado em critérios de pontuação
 const passwordStrength = computed(() => {
     const pwd = registerData.senha
     if (!pwd) return { width: '0%', bgColorClass: '', textColorClass: '', text: '' }
@@ -460,7 +481,6 @@ const passwordStrength = computed(() => {
     return { width: '100%', bgColorClass: 'bg-emerald-500', textColorClass: 'text-emerald-500', text: 'Excelente' }
 })
 
-// Divide a string do nome para exibir apenas o primeiro na tela de sucesso
 const primeiroNome = computed(() => {
     return registerData.nome.trim().split(' ')[0]
 })
@@ -471,13 +491,11 @@ const renderIcons = () => {
     }
 }
 
-// --- DISPARO DE REGISTRO PARA O BACKEND NODE.JS ---
 const handleRegister = async () => {
     errorMessage.value = ''
     isLoading.value = true
 
     try {
-        // Envia o payload estruturado exatamente como o seu authController.js espera receber via req.body
         await axios.post(API_URL, {
             nome: registerData.nome.trim(),
             email: registerData.email.trim(),
@@ -485,23 +503,19 @@ const handleRegister = async () => {
             senhaRepetida: registerData.senhaRepetida
         })
 
-        // Se o banco responder 21, significa que a conta e os 10 ativos de interesse foram salvos.
-        // Ativa a tela de sucesso
         isSuccess.value = true
 
     } catch (error) {
         console.error("Erro ao processar registro:", error)
 
-        // Captura as mensagens de tratamento de erro do seu backend (ex: "Já existe um usuário registrado com este e-mail.")
         if (error.response && error.response.data && error.response.data.message) {
             errorMessage.value = error.response.data.message
         } else {
             errorMessage.value = "Erro interno no servidor ao tentar cadastrar. Tente novamente."
         }
-        
+
     } finally {
         isLoading.value = false
-        // Força o Lucide a renderizar novos ícones de alerta ou sucesso após a alteração do DOM
         nextTick(() => {
             renderIcons()
         })
@@ -533,7 +547,6 @@ onUpdated(() => {
     box-shadow: 0 0 0 1px #EAB308;
 }
 
-/* Classes utilitárias para a animação da tag transition do Vue */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
     transition: all 0.4s ease;

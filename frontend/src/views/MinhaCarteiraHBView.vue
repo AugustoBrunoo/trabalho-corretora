@@ -69,43 +69,68 @@
 
         <main class="flex-grow flex flex-col max-w-[1400px] w-full mx-auto p-4 sm:p-6 lg:p-8 relative z-10">
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+
                 <div
-                    class="md:col-span-2 bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-slate-700 rounded-xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-center">
-                    <div class="relative z-10 flex justify-between items-end">
-                        <div>
-                            <p
-                                class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                                <i data-lucide="landmark" class="w-4 h-4 text-prime-500"></i> Patrimônio Total
-                            </p>
-                            <h3 class="text-3xl font-bold text-white tracking-tight">{{ formatarMoeda(patrimonioTotal)
-                                }}</h3>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-xs text-slate-500 mb-1">Relógio Simulado</p>
-                            <span
-                                class="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-slate-800/80 border border-slate-700 text-sm font-mono text-white">
-                                <i data-lucide="clock" class="w-3.5 h-3.5 text-prime-500"></i> Min {{ minutoAtual }}
-                            </span>
-                        </div>
+                    class="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-slate-700 rounded-xl p-5 shadow-lg relative overflow-hidden flex flex-col justify-center">
+                    <div
+                        class="absolute -right-10 -top-10 w-32 h-32 bg-prime-500/5 rounded-full blur-2xl pointer-events-none">
                     </div>
+                    <p
+                        class="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1.5 relative z-10">
+                        <i data-lucide="landmark" class="w-4 h-4 text-prime-500"></i> Patrimônio Total
+                    </p>
+                    <h3 class="text-2xl font-bold text-white tracking-tight relative z-10">{{
+                        formatarMoeda(patrimonioTotal) }}</h3>
+                    <p class="text-[10px] text-slate-500 mt-1 relative z-10 flex items-center gap-1">
+                        <i data-lucide="clock" class="w-3 h-3 text-prime-500"></i> Relógio: Min {{ minutoAtual }}
+                    </p>
                 </div>
 
                 <div class="bg-[#0F172A] border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col justify-center">
-                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Total Investido (Custo)
+                    <p
+                        class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i> Investido (Custo)
                     </p>
                     <h3 class="text-xl font-bold text-white tracking-tight">{{ formatarMoeda(totalInvestidoCusto) }}
                     </h3>
+                    <p class="text-[10px] text-slate-500 mt-1">Soma das ações em carteira</p>
                 </div>
 
-                <div :class="['border rounded-xl p-5 shadow-lg flex flex-col justify-center',
-                    lucroGlobal >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20']">
-                    <p class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-2">Resultado em Ações</p>
+                <div
+                    :class="['border rounded-xl p-5 shadow-lg flex flex-col justify-center', lucroGlobal >= 0 ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-red-500/5 border-red-500/20']">
+                    <p
+                        class="text-xs font-medium text-slate-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-slate-500"></i> Lucro Aberto
+                    </p>
                     <h3
                         :class="['text-xl font-bold tracking-tight', lucroGlobal >= 0 ? 'text-emerald-400' : 'text-red-400']">
                         {{ lucroGlobal >= 0 ? '+' : '' }} {{ formatarMoeda(lucroGlobal) }}
                     </h3>
+                    <p class="text-[10px] opacity-70 mt-1"
+                        :class="lucroGlobal >= 0 ? 'text-emerald-400' : 'text-red-400'">
+                        Variação exclusiva dos ativos atuais
+                    </p>
                 </div>
+
+                <div
+                    :class="['border rounded-xl p-5 shadow-lg flex flex-col justify-center relative overflow-hidden', resultadoHistorico >= 0 ? 'bg-emerald-900/20 border-emerald-500/40 shadow-emerald-500/10' : 'bg-red-900/20 border-red-500/40 shadow-red-500/10']">
+                    <p
+                        class="text-xs font-bold text-white uppercase tracking-wider mb-1 flex items-center gap-1.5 relative z-10">
+                        <i data-lucide="bar-chart-2" class="w-4 h-4"
+                            :class="resultadoHistorico >= 0 ? 'text-emerald-400' : 'text-red-400'"></i> Desempenho
+                        Global
+                    </p>
+                    <h3
+                        :class="['text-2xl font-bold tracking-tight relative z-10', resultadoHistorico >= 0 ? 'text-emerald-400' : 'text-red-400']">
+                        {{ resultadoHistorico >= 0 ? '+' : '' }} {{ formatarMoeda(resultadoHistorico) }}
+                    </h3>
+                    <p class="text-[10px] mt-1 font-medium relative z-10"
+                        :class="resultadoHistorico >= 0 ? 'text-emerald-500' : 'text-red-400'">
+                        Patrimônio Total vs. Aportes
+                    </p>
+                </div>
+
             </div>
 
             <div
@@ -352,6 +377,10 @@ const patrimonioTotal = ref(0)
 const totalInvestidoCusto = ref(0)
 const lucroGlobal = ref(0)
 
+// NOVO: Cálculo Global de Desempenho
+const totalAportado = ref(0)
+const resultadoHistorico = ref(0)
+
 const ordensPendentes = ref([])
 const ordensHistorico = ref([])
 
@@ -367,18 +396,13 @@ const vendaForm = reactive({
 
 // --- PROPRIEDADES COMPUTADAS SEGURAS ---
 const ordensFiltradas = computed(() => {
-    // Escolhe qual array de ordens estamos visualizando
     const listaAtual = abaOrdens.value === 'pendentes' ? ordensPendentes.value : ordensHistorico.value;
-
-    // BLINDAGEM: Retorna apenas ordens que realmente são objetos e que possuem um 'ticker'
-    // Isso ignora respostas estranhas do backend como { message: "Sem ordens" }
     return listaAtual.filter(ordem => ordem && typeof ordem === 'object' && ordem.ticker);
 })
 
 // --- FUNÇÕES DE API ---
 const getConfig = () => ({ headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
 
-// Função auxiliar para forçar o dado recebido a virar um array válido
 const extrairArraySeguro = (dadosBack) => {
     if (Array.isArray(dadosBack)) return dadosBack;
     if (dadosBack && Array.isArray(dadosBack.ordens)) return dadosBack.ordens;
@@ -389,10 +413,12 @@ const extrairArraySeguro = (dadosBack) => {
 const carregarDados = async () => {
     isLoading.value = true
     try {
-        const [resCarteira, resPendentes, resHistorico] = await Promise.all([
+        // ADICIONADO: 4ª Chamada para pegar o extrato da conta corrente e saber o total aportado
+        const [resCarteira, resPendentes, resHistorico, resConta] = await Promise.all([
             axios.get('http://localhost:3000/api/carteira', getConfig()),
             axios.get('http://localhost:3000/api/ordens/pendentes', getConfig()),
-            axios.get('http://localhost:3000/api/ordens/transacoes', getConfig())
+            axios.get('http://localhost:3000/api/ordens/transacoes', getConfig()),
+            axios.get('http://localhost:3000/api/conta/transacoes', getConfig())
         ])
 
         // Povoa os dados base
@@ -405,7 +431,20 @@ const carregarDados = async () => {
         totalInvestidoCusto.value = parseFloat(resumo.totalInvestido || 0)
         lucroGlobal.value = parseFloat(resumo.lucroPrejuizoTotal || 0)
 
-        // BLINDAGEM: Converte de forma forçada para array limpo
+        // CÁLCULO DO RESULTADO GLOBAL DA CONTA (Histórico)
+        const transacoesConta = extrairArraySeguro(resConta.data);
+        let totalDepositos = 0;
+        let totalRetiradas = 0;
+
+        transacoesConta.forEach(t => {
+            if (t.tipo === 'deposito') totalDepositos += parseFloat(t.valor);
+            else if (t.tipo === 'retirada') totalRetiradas += parseFloat(t.valor);
+        });
+
+        totalAportado.value = totalDepositos - totalRetiradas;
+        resultadoHistorico.value = patrimonioTotal.value - totalAportado.value;
+
+        // Povoa as Ordens
         ordensPendentes.value = extrairArraySeguro(resPendentes.data)
         ordensHistorico.value = extrairArraySeguro(resHistorico.data)
 
