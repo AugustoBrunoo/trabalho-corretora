@@ -209,13 +209,12 @@ const cancelarOrdemCondicional = async (req, res) => {
 
         const { id } = req.params;
 
-        // busca o tempo global
+        // Mantemos a declaração original da sua equipe
         const minutoGlobal = await mercadoService.obterMinutoGlobal();
 
-        // Só permite cancelar se a ordem pertencer ao usuário logado e estiver pendente
         const ordemCancelada = await Ordem.findOneAndUpdate(
             { _id: id, usuario: claims.user_id, status: 'pendente' },
-            { status: 'cancelada', minutoExecucao: minutoAtual }, 
+            { status: 'cancelada', minutoExecucao: minutoGlobal }, 
             { new: true }
         );
         

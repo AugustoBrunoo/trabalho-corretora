@@ -26,12 +26,17 @@
                     </p>
                 </div>
 
-                <div
-                    class="bg-[#0F172A]/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8">
+                <div class="bg-[#0F172A]/90 backdrop-blur-md border border-slate-800 rounded-2xl shadow-2xl p-6 sm:p-8">
 
                     <div v-if="errorMessage"
                         class="mb-5 bg-red-500/10 border border-red-500/20 rounded-lg p-4 flex items-start gap-3">
-                        <i data-lucide="alert-circle" class="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="flex-shrink-0 mt-0.5 text-red-400">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
                         <p class="text-sm text-red-200">{{ errorMessage }}</p>
                     </div>
 
@@ -50,9 +55,9 @@
 
                                 <button type="button" @click="showPassword = !showPassword"
                                     class="pr-4 text-slate-500 hover:text-slate-300 focus:outline-none flex justify-center items-center">
-                                    <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20"
-                                        height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
                                         <path
                                             d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
@@ -98,10 +103,9 @@
 
                                 <button type="button" @click="showPasswordConfirm = !showPasswordConfirm"
                                     class="pr-4 text-slate-500 hover:text-slate-300 focus:outline-none flex justify-center items-center">
-                                    <svg v-if="showPasswordConfirm" xmlns="http://www.w3.org/2000/svg"
-                                        width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round">
+                                    <svg v-if="showPasswordConfirm" xmlns="http://www.w3.org/2000/svg" width="20"
+                                        height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
                                         <path
                                             d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
@@ -125,9 +129,9 @@
                             <ul class="space-y-1.5 text-xs">
                                 <li
                                     :class="['flex items-center gap-2 transition-colors', isLengthValid ? 'text-emerald-500' : 'text-slate-500']">
-                                    <svg v-if="isLengthValid" xmlns="http://www.w3.org/2000/svg" width="14"
-                                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg v-if="isLengthValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                     </svg>
                                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -140,9 +144,9 @@
                                 </li>
                                 <li
                                     :class="['flex items-center gap-2 transition-colors', isLetterValid ? 'text-emerald-500' : 'text-slate-500']">
-                                    <svg v-if="isLetterValid" xmlns="http://www.w3.org/2000/svg" width="14"
-                                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg v-if="isLetterValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                     </svg>
                                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -155,9 +159,9 @@
                                 </li>
                                 <li
                                     :class="['flex items-center gap-2 transition-colors', isNumberValid ? 'text-emerald-500' : 'text-slate-500']">
-                                    <svg v-if="isNumberValid" xmlns="http://www.w3.org/2000/svg" width="14"
-                                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg v-if="isNumberValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                     </svg>
                                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -170,9 +174,9 @@
                                 </li>
                                 <li
                                     :class="['flex items-center gap-2 transition-colors', isMatchValid ? 'text-emerald-500' : 'text-slate-500']">
-                                    <svg v-if="isMatchValid" xmlns="http://www.w3.org/2000/svg" width="14"
-                                        height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                    <svg v-if="isMatchValid" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                                        stroke-linecap="round" stroke-linejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                     </svg>
                                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14"
@@ -190,12 +194,21 @@
                             :class="['w-full font-semibold py-3.5 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2 mt-4',
                                 isFormValid && !isLoading ? 'bg-prime-500 hover:bg-prime-400 text-slate-900 shadow-lg shadow-prime-500/20' : 'bg-slate-700 text-slate-400 cursor-not-allowed']">
                             <template v-if="isLoading">
-                                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" class="animate-spin">
+                                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                                </svg>
                                 <span>Salvando...</span>
                             </template>
                             <template v-else>
                                 <span>Redefinir Senha</span>
-                                <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                    <polyline points="22 4 12 14.01 9 11.01" />
+                                </svg>
                             </template>
                         </button>
                     </form>
@@ -207,7 +220,12 @@
                     class="bg-[#0F172A]/90 backdrop-blur-md border border-emerald-500/30 rounded-2xl shadow-[0_0_40px_-10px_rgba(16,185,129,0.2)] p-8 sm:p-10">
                     <div
                         class="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-emerald-500/20">
-                        <i data-lucide="shield-check" class="w-10 h-10 text-emerald-500"></i>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            class="text-emerald-500">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                            <path d="m9 12 2 2 4-4" />
+                        </svg>
                     </div>
                     <h2 class="text-2xl font-bold text-white mb-3">Senha Atualizada!</h2>
                     <p class="text-slate-400 text-sm mb-8 leading-relaxed">
@@ -297,8 +315,8 @@ const handleReset = async () => {
             senhaRepetida: senhaRepetida.value
         })
 
+        // isSuccess troca a tela e o SVG já carrega direto com ela
         isSuccess.value = true
-        nextTick(() => { renderIcons() })
 
     } catch (error) {
         console.error("Erro ao resetar senha:", error)
@@ -309,13 +327,12 @@ const handleReset = async () => {
             errorMessage.value = "Erro interno do servidor ao tentar redefinir a senha."
         }
 
-        nextTick(() => { renderIcons() })
-
     } finally {
         isLoading.value = false
     }
 }
 
+// Mantido apenas para os ícones estáticos que carregam com a página (ex: shield-alert inicial e lock)
 onMounted(() => {
     nextTick(() => { renderIcons() })
 })

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const Usuario = require('../models/usuarioModel');
 const AcaoInteresse = require('../models/acaoInteresseModel');
 const precosService = require('../services/precosService');
-const emailService = require('../services/emailService'); // 🌟 Novo serviço integrado da Resend
+const emailService = require('../services/emailService');
 
 // Chave secreta usada pelo jwt.sign aqui e pelo auth.js na verificação (Assinatura)
 const TOKEN_KEY = process.env.TOKEN_KEY;
@@ -124,7 +124,7 @@ const esqueciSenha = async (req, res) => {
 
         usuario.tokenSenha = tokenRecuperacao;
         usuario.dataTokenSenha = new Date();
-        await usuario.save(); 
+        await usuario.save();
 
         // Rota do teu ecossistema Vue (mapeada no teu front-end para abrir o NovaSenhaForm.vue)
         const urlSimulada = `http://localhost:5173/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
@@ -177,6 +177,12 @@ const resetarSenha = async (req, res) => {
             return res.status(400).json({ message: "A confirmação de senha está diferente da senha." });
         }
 
+        // Valida se a senha nova é idêntica à senha atual cadastrada (criptografada)
+        const senhaJaEmUso = await bcrypt.compare(senha, usuario.senha);
+        if (senhaJaEmUso) {
+            return res.status(400).json({ message: "A nova senha não pode ser igual à sua senha atual." });
+        }
+
         // Guarda a nova password encriptada e limpa o token para impedir reuso por segurança
         usuario.senha = await bcrypt.hash(senha, 10);
         usuario.tokenSenha = null;
@@ -209,6 +215,11 @@ const trocaSenhaLogado = async (req, res) => {
         const senhaCorreta = await bcrypt.compare(senhaAntiga, usuario.senha);
         if (!senhaCorreta) {
             return res.status(400).json({ message: "A senha antiga não confere com as credenciais do usuário." });
+        }
+
+        // Valida se a senha nova digitada é igual à senha antiga que acabou de ser confirmada
+        if (senhaAntiga === senhaNova) {
+            return res.status(400).json({ message: "A nova senha não pode ser igual à sua senha atual." });
         }
 
         if (!verificaSenhaValida(senhaNova)) {

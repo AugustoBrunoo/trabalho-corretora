@@ -9,7 +9,7 @@ const enviarEmailRecuperacao = async (emailDestino, nomeUsuario, urlSimulada) =>
 
         const { data, error } = await resend.emails.send({
             // No plano gratuito da Resend, você deve usar obrigatoriamente 'onboarding@resend.dev'
-            from: 'onboarding@resend.dev',
+            from: 'PrimeInvest <suporte-primeinvest@golsocial.app.br>',
             to: emailDestino,
             subject: "🔒 Recuperação de Senha - PrimeInvest",
             html: `
