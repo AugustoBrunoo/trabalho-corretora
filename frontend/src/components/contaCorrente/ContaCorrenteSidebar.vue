@@ -37,14 +37,31 @@
 
       <nav class="flex-1 overflow-y-auto p-5 space-y-2 no-scrollbar">
         <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 px-2">Plataforma</p>
+
         <router-link to="/dashboard" @click="$emit('close')" class="flex items-center justify-between px-4 py-3.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group border border-transparent hover:border-slate-700/50">
           <div class="flex items-center gap-3"><i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-400"></i> Início</div>
           <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 group-hover:text-slate-400"></i>
         </router-link>
-        <router-link to="/conta-corrente" @click="$emit('close')" class="flex items-center justify-between px-4 py-3.5 rounded-xl bg-prime-500/10 text-prime-400 border border-prime-500/20 font-semibold transition-colors group">
-          <div class="flex items-center gap-3"><i data-lucide="file-text" class="w-5 h-5"></i> Conta Corrente</div>
-          <div class="w-1.5 h-1.5 rounded-full bg-prime-500"></div>
+
+        <router-link to="/mercado" @click="$emit('close')" class="flex items-center justify-between px-4 py-3.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group border border-transparent hover:border-slate-700/50">
+          <div class="flex items-center gap-3"><i data-lucide="line-chart"
+                            class="w-5 h-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i> Mercado</div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 group-hover:text-slate-400"></i>
         </router-link>
+
+         <router-link to="/mercado" @click="$emit('close')" class="flex items-center justify-between px-4 py-3.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group border border-transparent hover:border-slate-700/50">
+          <div class="flex items-center gap-3"><i data-lucide="briefcase"
+                            class="w-5 h-5 text-slate-400 group-hover:text-prime-400 transition-colors"></i> Minha Carteira</div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 group-hover:text-slate-400"></i>
+        </router-link>
+
+         <router-link to="/mercado" @click="$emit('close')" class="flex items-center justify-between px-4 py-3.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group border border-transparent hover:border-slate-700/50">
+          <div class="flex items-center gap-3"><i data-lucide="file-text" class="w-5 h-5"></i> Conta Corrente</div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 group-hover:text-slate-400"></i>
+        </router-link>
+
+
+
       </nav>
     </aside>
   </div>
