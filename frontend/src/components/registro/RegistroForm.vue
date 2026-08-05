@@ -220,7 +220,7 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted, nextTick, onUpdated } from 'vue'
-import axios from 'axios'
+import api from '@/services/api'
 
 const registerData = reactive({
     nome: '',
@@ -237,7 +237,7 @@ const isSuccess = ref(false)
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
 
-const API_URL = 'http://localhost:3000/api/auth/registro'
+const API_URL = '/api/auth/registro'
 
 const regexLetra = /.*[a-zA-Z].*/
 const regexNumero = /.*[0-9].*/
@@ -296,7 +296,7 @@ const handleRegister = async () => {
     isLoading.value = true
 
     try {
-        await axios.post(API_URL, {
+        await api.post(API_URL, {
             nome: registerData.nome.trim(),
             email: registerData.email.trim(),
             senha: registerData.senha,

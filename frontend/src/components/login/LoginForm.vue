@@ -106,7 +106,7 @@
 <script setup>
 import { ref, reactive, onMounted, nextTick, onUpdated } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 
 const router = useRouter()
 
@@ -124,7 +124,7 @@ const togglePassword = () => {
     showPassword.value = !showPassword.value
 }
 
-const API_URL = 'http://localhost:3000/api/auth/login'
+const API_URL = '/api/auth/login'
 
 function verificaEmailValido(email) {
     if (!email) return false;
@@ -152,7 +152,7 @@ const handleLogin = async () => {
     isLoading.value = true
 
     try {
-        const response = await axios.post(API_URL, {
+        const response = await api.post(API_URL, {
             email: loginData.email,
             senha: loginData.senha
         })

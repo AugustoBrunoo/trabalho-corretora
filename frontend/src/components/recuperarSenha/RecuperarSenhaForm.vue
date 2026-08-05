@@ -112,7 +112,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import axios from 'axios'
+import api from '@/services/api'
 
 // Estados Reativos do Componente
 const email = ref('')
@@ -121,7 +121,7 @@ const errorMessage = ref('')
 const isSuccess = ref(false)
 
 // 🔗 URL de Integração
-const API_URL = 'http://localhost:3000/api/auth/esqueci'
+const API_URL = '/api/auth/esqueci'
 
 const verificaEmailValido = (emailTest) => {
     if (!emailTest) return false
@@ -142,7 +142,7 @@ const handleRecuperacao = async () => {
     isLoading.value = true
 
     try {
-        await axios.post(API_URL, {
+        await api.post(API_URL, {
             email: email.value.trim()
         })
 
