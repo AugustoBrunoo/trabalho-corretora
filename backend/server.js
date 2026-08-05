@@ -22,21 +22,20 @@ app.use('/api/auth', authRoutes);
 app.use('/api/carteira', carteiraRoutes);
 app.use('/api/ordens', ordemRoutes);
 
-// Configuração da Porta
-const PORTA = process.env.PORT;
+const PORTA = process.env.PORT || 3000;
 
-// Conexão com o MongoDB usando a variável MONGO_URL
-const connectDB = async () => mongoose.connect(process.env.MONGO_URL)
-    .then(() => {
-        console.log(' Banco de dados MongoDB conectado com sucesso!');
-        
-        // O servidor só começa a rodar depois que o banco de dados estiver conectado
-        app.listen(PORTA, () => {
-            console.log(`OK. Servidor rodando na porta ${PORTA}`);
-        });
-    })
-    .catch((erro) => {
-        console.error(' Erro crítico ao conectar no MongoDB:', erro);
+// Conexão com o MongoDB
+const connectDB = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log(' Banco de dados MongoDB conectado com sucesso!');
+    
+    app.listen(PORTA, () => {
+      console.log(` Servidor rodando na porta ${PORTA}`);
     });
+  } catch (erro) {
+    console.error(' Erro crítico ao conectar no MongoDB:', erro);
+  }
+};
 
-connectDB();    
+connectDB();
