@@ -126,10 +126,10 @@ const esqueciSenha = async (req, res) => {
         usuario.dataTokenSenha = new Date();
         await usuario.save();
 
-        // Rota do teu ecossistema Vue (mapeada no teu front-end para abrir o NovaSenhaForm.vue)
-        const urlSimulada = `http://localhost:5173/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
+       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+       const urlSimulada = `${frontendUrl}/login/reset?token=${tokenRecuperacao}&email=${usuario.email}`;
 
-        // 🌟 Dispara o e-mail real usando o serviço que consome a API da Resend
+        //  Dispara o e-mail real usando o serviço que consome a API da Resend
         await emailService.enviarEmailRecuperacao(usuario.email, usuario.nome, urlSimulada);
 
         return res.status(200).json({
