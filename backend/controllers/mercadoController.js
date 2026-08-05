@@ -116,7 +116,7 @@ const pegarTempo = async (req, res) => {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
-        // Chama a função e já recebe o número
+        // Chama a função e já recebe o número do minuto
         const minutoGlobal = await mercadoService.obterMinutoGlobal();
 
         return res.status(200).json({ minutoAtual: minutoGlobal });
@@ -140,8 +140,8 @@ const avancarTempo = async (req, res) => {
             mercado = await Mercado.create({ minutoAtual: 0 });
         }
 
-        mercado.minutoAtual += Number(minutos);
-        if (mercado.minutoAtual > 59) mercado.minutoAtual = 59; 
+        // Aplica o ciclo contínuo de 0 a 59 minutos sem travar
+        mercado.minutoAtual = (mercado.minutoAtual + Number(minutos)) % 60;
         
         await mercado.save();
         await processarOrdensCondicionaisAgendadas(mercado.minutoAtual);
@@ -201,7 +201,7 @@ const removerAcaoInteresse = async (req, res) => {
     }
 };
 
-// Listagem de acoes de interesse com as variações
+// Listagem de ações de interesse com as variações
 const listarAcoesInteresse = async (req, res) => {
     try {
         const claims = auth.verifyToken(req, res);
@@ -218,28 +218,19 @@ const listarAcoesInteresse = async (req, res) => {
             try {
                 const dadosFechamentoGeral = await precosService.obterFechamentoDiario();
                 if (dadosFechamentoGeral && dadosFechamentoGeral.length > 0) {
-                    // Mapeia os tickers que o usuário já possui salvos
                     const tickersExistentes = minhasAcoesSalvas.map(a => a.ticker.toUpperCase());
-                    
-                    // Filtra apenas as ações do mercado que ele AINDA NÃO possui
                     const disponiveis = dadosFechamentoGeral.filter(f => !tickersExistentes.includes(f.ticker.toUpperCase()));
-                    
-                    // Embaralha o array de ações disponíveis aleatoriamente
                     const embaralhado = disponiveis.sort(() => 0.5 - Math.random());
-                    
-                    // Define a quantidade que falta para atingir 10 ações no total
                     const quantasFaltam = 10 - minhasAcoesSalvas.length;
                     const selecionadas = embaralhado.slice(0, quantasFaltam);
 
                     if (selecionadas.length > 0) {
-                        // Faz a inserção em lote no MongoDB
                         await AcaoInteresse.insertMany(
                             selecionadas.map(s => ({
                                 usuario: claims.user_id,
                                 ticker: s.ticker.toUpperCase()
                             }))
                         );
-                        // Atualiza a busca local do banco de dados com os novos registros inclusos
                         minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });
                     }
                 }
@@ -255,17 +246,19 @@ const listarAcoesInteresse = async (req, res) => {
         try {
             dadosFechamentoGeral = await precosService.obterFechamentoDiario();
         } catch (err) {
-            console.error(" Falha ao carregar tickers.json, variações usarão fallback:", err.message);
+            console.error("Falha ao carregar tickers.json, variações usarão fallback:", err.message);
         }
 
         const acoesParaATela = [];
 
-        // Para cada ação favoritada, procura o preço no minuto atual ou vai voltando no tempo
+        // Para cada ação favoritada, procura o preço no minuto atual ou retrocede em ciclo
         for (let ticker of meusTickers) {
             let precoEncontrado = null;
             
-            for (let m = minutoGlobal; m >= 0; m--) {
-                const precosHistoricos = await precosService.obterPrecosPorMinuto(m);
+            // Busca circular de até 60 minutos para trás no tempo simulado
+            for (let i = 0; i < 60; i++) {
+                const minutoBusca = (minutoGlobal - i + 60) % 60;
+                const precosHistoricos = await precosService.obterPrecosPorMinuto(minutoBusca);
                 const cotacao = precosHistoricos.find(p => p.ticker === ticker);
                 
                 if (cotacao) {
@@ -278,23 +271,19 @@ const listarAcoesInteresse = async (req, res) => {
                 const fechamentoAcao = dadosFechamentoGeral.find(f => f.ticker === ticker);
                 const precoAtual = Number(precoEncontrado);
                 
-                // Convertendo para Number de forma segura antes da matemática (evita o NaN)
                 const precoFechamento = (fechamentoAcao && fechamentoAcao.fechamento !== undefined && !isNaN(Number(fechamentoAcao.fechamento))) 
                     ? Number(fechamentoAcao.fechamento) 
                     : precoAtual;
 
-                // Matemática de variações (usando apenas números puros)
                 const variacaoNominal = precoAtual - precoFechamento;
                 const variacaoPercentual = precoFechamento > 0 ? (variacaoNominal / precoFechamento) * 100 : 0;
 
-                // Define o sinal de "+" se for positivo (se for negativo, o toFixed() já coloca o "-")
                 const sinalNominal = variacaoNominal > 0 ? "+" : "";
                 const sinalPercentual = variacaoPercentual > 0 ? "+" : "";
 
                 acoesParaATela.push({
                     ticker: ticker,
                     preco: precoAtual.toFixed(2),
-                    // Formata a string final juntando o sinal e o valor
                     variacaoNominal: `${sinalNominal}${variacaoNominal.toFixed(2)}`, 
                     variacaoPercentual: `${sinalPercentual}${variacaoPercentual.toFixed(2)}` 
                 });
