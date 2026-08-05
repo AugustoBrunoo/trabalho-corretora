@@ -145,15 +145,16 @@ const extrairArraySeguro = (dadosBack) => {
 const carregarMercado = async () => {
     isLoading.value = true
     try {
-        const [resCarteira, resTempo, resAcoes] = await Promise.all([
+        const resTempo = await api.get('/api/mercado/tempo', getConfig())
+        minutoAtual.value = resTempo.data.minutoAtual !== undefined ? resTempo.data.minutoAtual : (resTempo.data.tempo || 0)
+
+        const [resCarteira, resAcoes] = await Promise.all([
             api.get('/api/carteira', getConfig()),
-            api.get('/api/mercado/tempo', getConfig()),
-            api.get('/api/mercado/acoes', getConfig())
+            api.get(`/api/mercado/acoes?minuto=${minutoAtual.value % 60}`, getConfig())
         ])
 
         saldoDisponivel.value = parseFloat(resCarteira.data.saldoDisponivel || 0)
         patrimonioInvestido.value = parseFloat(resCarteira.data.resumo?.patrimonioAtivos || 0)
-        minutoAtual.value = resTempo.data.minutoAtual !== undefined ? resTempo.data.minutoAtual : (resTempo.data.tempo || 0)
 
         const novasAcoes = extrairArraySeguro(resAcoes.data)
 
@@ -185,7 +186,7 @@ const abrirOffcanvasPesquisa = async () => {
 
     isLoadingCatalogo.value = true
     try {
-        const minUrl = minutoAtual.value || 0;
+        const minUrl = (minutoAtual.value || 0) % 60;
         const response = await axios.get(`https://raw.githubusercontent.com/marciobarros/dsw-simulador-corretora/refs/heads/main/${minUrl}.json`);
         const listaBruta = extrairArraySeguro(response.data);
 
@@ -205,14 +206,7 @@ const abrirOffcanvasPesquisa = async () => {
 }
 
 const avancarTempo = async (minutos) => {
-    const minutoInt = parseInt(minutoAtual.value) || 0;
-    if (minutoInt >= 59) {
-        isTempoOpen.value = false; tempoAvanco.value = '';
-        return adicionarToast("Mercado encerrado no minuto 59.", "erro")
-    }
-
     let avancoReal = parseInt(minutos)
-    if (minutoInt + avancoReal > 59) avancoReal = 59 - minutoInt
 
     isAvancandoTempo.value = true
     try {
