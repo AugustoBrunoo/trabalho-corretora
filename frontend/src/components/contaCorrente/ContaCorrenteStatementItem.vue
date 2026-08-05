@@ -8,7 +8,9 @@
       <div>
         <p class="font-semibold text-white text-sm sm:text-base leading-tight mb-1">{{ transacao.descricao }}</p>
         <div class="flex items-center gap-3 text-xs font-medium text-slate-500">
-          <span class="bg-[#0B0F19] px-2 py-0.5 rounded border border-slate-800">Minuto Simulado: {{ transacao.minutoSimulacao }}</span>
+          <span class="bg-[#0B0F19] px-2 py-0.5 rounded border border-slate-800">
+            Simulação: {{ String(transacao.horaSimulacao || 0).padStart(2, '0') }}:{{ String(transacao.minutoSimulacao || 0).padStart(2, '0') }}
+          </span>
           <span>{{ formatarData(transacao.createdAt) }}</span>
         </div>
       </div>

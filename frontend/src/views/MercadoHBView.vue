@@ -102,6 +102,7 @@ const nomeUsuario = ref(localStorage.getItem('usuario_nome') || 'Usuário')
 const saldoDisponivel = ref(0)
 const patrimonioInvestido = ref(0)
 const minutoAtual = ref(0)
+const horaAtual = ref(0)
 const acoesMercado = ref([])
 const tempoAvanco = ref('')
 
@@ -123,7 +124,7 @@ const getConfig = () => ({ headers: { Authorization: `Bearer ${localStorage.getI
 const formatarMoeda = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
 
 const relogioFormatado = computed(() => {
-    const d = new Date(); d.setHours(14, minutoAtual.value || 0, 0, 0);
+    const d = new Date(); d.setHours(horaAtual.value || 0, minutoAtual.value || 0, 0, 0);
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 })
 
@@ -147,6 +148,7 @@ const carregarMercado = async () => {
     try {
         const resTempo = await api.get('/api/mercado/tempo', getConfig())
         minutoAtual.value = resTempo.data.minutoAtual !== undefined ? resTempo.data.minutoAtual : (resTempo.data.tempo || 0)
+        horaAtual.value = resTempo.data.horaAtual !== undefined ? resTempo.data.horaAtual : 0
 
         const [resCarteira, resAcoes] = await Promise.all([
             api.get('/api/carteira', getConfig()),

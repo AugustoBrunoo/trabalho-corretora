@@ -9,7 +9,7 @@ const Mercado = require('../models/mercadoModel');
 const auth = require('../auth/auth');
 
 // Função auxiliar (automatização de ordens pendentes)
-async function processarOrdensCondicionaisAgendadas(minutoAtual) {
+async function processarOrdensCondicionaisAgendadas(minutoAtual, horaAtual) {
     try {
         const ordensPendentes = await Ordem.find({ status: 'pendente' });
         if (ordensPendentes.length === 0) return;
@@ -50,6 +50,7 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
                             valor: valorTotalOrdem,
                             descricao: `[EXECUÇÃO AUTOMÁTICA] Compra condicional de ${ordem.quantidade} ações de ${ordem.ticker}`,
                             minutoSimulacao: minutoAtual,
+                            horaSimulacao: horaAtual,
                             saldoResultante: usuario.saldoGeral
                         });
 
@@ -65,6 +66,7 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
 
                         ordem.status = 'executada';
                         ordem.minutoExecucao = minutoAtual;
+                        ordem.horaExecucao = horaAtual;
                         ordem.precoReferencia = precoAtual;
                         await ordem.save();
                     } else {
@@ -85,6 +87,7 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
                             valor: valorTotalOrdem,
                             descricao: `[EXECUÇÃO AUTOMÁTICA] Venda condicional de ${ordem.quantidade} ações de ${ordem.ticker}`,
                             minutoSimulacao: minutoAtual,
+                            horaSimulacao: horaAtual,
                             saldoResultante: usuario.saldoGeral
                         });
 
@@ -97,6 +100,7 @@ async function processarOrdensCondicionaisAgendadas(minutoAtual) {
 
                         ordem.status = 'executada';
                         ordem.minutoExecucao = minutoAtual;
+                        ordem.horaExecucao = horaAtual;
                         ordem.precoReferencia = precoAtual;
                         await ordem.save();
                     } else {
@@ -116,10 +120,10 @@ const pegarTempo = async (req, res) => {
         const claims = auth.verifyToken(req, res);
         if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
-        // Chama a função e já recebe o número
-        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        // Chama a função e já recebe o objeto
+        const { minutoAtual: minutoGlobal, horaAtual: horaGlobal } = await mercadoService.obterTempoGlobal();
 
-        return res.status(200).json({ minutoAtual: minutoGlobal });
+        return res.status(200).json({ minutoAtual: minutoGlobal, horaAtual: horaGlobal });
     } catch (erro) {
         return res.status(500).json({ erro: "Erro ao buscar o tempo.", detalhe: erro.message });
     }
@@ -137,18 +141,27 @@ const avancarTempo = async (req, res) => {
 
         let mercado = await Mercado.findOne();
         if (!mercado) {
-            mercado = await Mercado.create({ minutoAtual: 0 });
+            mercado = await Mercado.create({ minutoAtual: 0, horaAtual: 0 });
         }
 
-        mercado.minutoAtual += Number(minutos);
-        if (mercado.minutoAtual > 59) mercado.minutoAtual = 59; 
+        const totalMinutos = mercado.minutoAtual + Number(minutos);
+        const novoMinuto = totalMinutos % 60;
+        const horasParaSomar = Math.floor(totalMinutos / 60);
+        
+        // Assegura fallback para horaAtual se não existir (para contas antigas)
+        const horaAtualDb = mercado.horaAtual !== undefined ? mercado.horaAtual : 0;
+        const novaHora = (horaAtualDb + horasParaSomar) % 24;
+
+        mercado.minutoAtual = novoMinuto;
+        mercado.horaAtual = novaHora;
         
         await mercado.save();
-        await processarOrdensCondicionaisAgendadas(mercado.minutoAtual);
+        await processarOrdensCondicionaisAgendadas(mercado.minutoAtual, mercado.horaAtual);
 
         return res.status(200).json({
             mensagem: `Tempo avançado com sucesso.`,
-            minutoAtual: mercado.minutoAtual
+            minutoAtual: mercado.minutoAtual,
+            horaAtual: mercado.horaAtual
         });
     } catch (erro) {
         return res.status(500).json({ erro: "Erro ao avançar o tempo.", detalhe: erro.message });
@@ -208,7 +221,7 @@ const listarAcoesInteresse = async (req, res) => {
         if (!claims) return res.status(401).json({ erro: "Não autorizado." });
 
         // Pega o tempo global
-        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual: minutoGlobal } = await mercadoService.obterTempoGlobal();
         
         // Procura as ações favoritadas pelo usuário
         let minhasAcoesSalvas = await AcaoInteresse.find({ usuario: claims.user_id });

@@ -176,7 +176,7 @@ const gerarPDFExtrato = () => {
         const isDep = t.tipo === 'deposito'
         html += `
             <tr style="border-bottom: 1px solid #E2E8F0;">
-                <td style="padding: 12px 10px; font-size: 12px;">${new Date(t.createdAt).toLocaleDateString('pt-BR')} (Min: ${t.minutoSimulacao}m)</td>
+                <td style="padding: 12px 10px; font-size: 12px;">${new Date(t.createdAt).toLocaleDateString('pt-BR')} (Simulação: ${String(t.horaSimulacao || 0).padStart(2, '0')}:${String(t.minutoSimulacao || 0).padStart(2, '0')})</td>
                 <td style="padding: 12px 10px; font-size: 12px;">${t.descricao}</td>
                 <td style="padding: 12px 10px; font-size: 13px; color: ${isDep ? '#059669' : '#DC2626'}; text-align: right; font-weight: bold;">${isDep ? '+' : '-'} ${formatarMoeda(t.valor)}</td>
             </tr>

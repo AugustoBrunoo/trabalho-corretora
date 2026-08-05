@@ -36,7 +36,9 @@
                                     {{ ordem.tipoOrdem }}
                                 </span>
                             </div>
-                            <p class="text-[10px] text-slate-400">Min. Registro: {{ ordem.minutoRegistro }}</p>
+                            <p class="text-[10px] text-slate-400">
+                                Registro: {{ String(ordem.horaRegistro || 0).padStart(2, '0') }}:{{ String(ordem.minutoRegistro || 0).padStart(2, '0') }}
+                            </p>
                         </div>
                         <div class="text-right">
                             <p class="font-bold text-white text-sm">{{ ordem.quantidade }} UN</p>
@@ -52,7 +54,7 @@
                     </div>
                     <div v-else class="mt-3 pt-3 border-t border-slate-700/60">
                         <span :class="['text-[10px] uppercase font-bold', ordem.status === 'executada' ? 'text-emerald-500' : 'text-slate-500']">
-                            {{ ordem.status === 'executada' ? `Executada no min ${ordem.minutoExecucao}` : 'Cancelada' }}
+                            {{ ordem.status === 'executada' ? `Executada: ${String(ordem.horaExecucao || 0).padStart(2, '0')}:${String(ordem.minutoExecucao || 0).padStart(2, '0')}` : 'Cancelada' }}
                         </span>
                     </div>
                 </div>

@@ -6,6 +6,7 @@ const transacaoSchema = new mongoose.Schema({
     valor: { type: Number, required: true },
     descricao: { type: String, required: true },
     minutoSimulacao: { type: Number, required: true },
+    horaSimulacao: { type: Number, default: 0 },
     saldoResultante: { type: Number, required: true }
 }, { timestamps: true }); 
 module.exports = mongoose.model('Transacao', transacaoSchema);
