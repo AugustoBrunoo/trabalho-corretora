@@ -29,7 +29,7 @@ const depositar = async (req, res) => {
         }
 
         // pega o tempo global
-        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual: minutoGlobal, horaAtual: horaGlobal } = await mercadoService.obterTempoGlobal();
 
         // Atualiza o saldo geral do usuário
         usuario.saldoGeral += Number(valor);
@@ -42,6 +42,7 @@ const depositar = async (req, res) => {
             valor: Number(valor),
             descricao: descricao.trim(),
             minutoSimulacao: minutoGlobal,
+            horaSimulacao: horaGlobal,
             saldoResultante: usuario.saldoGeral   // Saldo histórico após o depósito
         });
 
@@ -87,7 +88,7 @@ const retirar = async (req, res) => {
             });
         }
 
-        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual: minutoGlobal, horaAtual: horaGlobal } = await mercadoService.obterTempoGlobal();
 
         // Reduz o valor do saldo do usuário
         usuario.saldoGeral -= Number(valor);
@@ -100,6 +101,7 @@ const retirar = async (req, res) => {
             valor: Number(valor),
             descricao: descricao.trim(),
             minutoSimulacao: minutoGlobal,
+            horaSimulacao: horaGlobal,
             saldoResultante: usuario.saldoGeral
         });
 
@@ -135,11 +137,12 @@ const listarTransacoes = async (req, res) => {
         const transacoes = await Transacao.find({ usuario: userId }).sort({ createdAt: 1 });
 
         // pega o minuto global
-        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual: minutoGlobal, horaAtual: horaGlobal } = await mercadoService.obterTempoGlobal();
 
         return res.status(200).json({
             saldoAtual: usuario.saldoGeral,
             minutoAtual: minutoGlobal,
+            horaAtual: horaGlobal,
             transacoes: transacoes
         });
 

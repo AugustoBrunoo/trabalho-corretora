@@ -52,7 +52,7 @@
 <script setup>
 import { ref, onMounted, onUpdated, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import CarteiraNavbar from '../components/minhaCarteira/CarteiraNavbar.vue'
 import CarteiraSidebar from '../components/minhaCarteira/CarteiraSidebar.vue'
 import CarteiraSummary from '../components/minhaCarteira/CarteiraSummary.vue'
@@ -104,10 +104,10 @@ const carregarDados = async () => {
     isLoading.value = true
     try {
         const [resCarteira, resPendentes, resHistorico, resConta] = await Promise.all([
-            axios.get('http://localhost:3000/api/carteira', getConfig()),
-            axios.get('http://localhost:3000/api/ordens/pendentes', getConfig()),
-            axios.get('http://localhost:3000/api/ordens/transacoes', getConfig()),
-            axios.get('http://localhost:3000/api/conta/transacoes', getConfig())
+            api.get('/api/carteira', getConfig()),
+            api.get('/api/ordens/pendentes', getConfig()),
+            api.get('/api/ordens/transacoes', getConfig()),
+            api.get('/api/conta/transacoes', getConfig())
         ])
 
         saldoDisponivel.value = parseFloat(resCarteira.data.saldoDisponivel || 0)
@@ -155,7 +155,7 @@ const confirmarVenda = async (formularioEnviado) => {
     }
     isEnviandoVenda.value = true
     try {
-        await axios.post('http://localhost:3000/api/ordens', {
+        await api.post('/api/ordens', {
             ticker: ativoSelecionado.value.ticker,
             tipoOrdem: 'venda',
             tipoExecucao: formularioEnviado.tipoExecucao,
@@ -176,7 +176,7 @@ const confirmarVenda = async (formularioEnviado) => {
 
 const cancelarOrdem = async (id) => {
     try {
-        await axios.delete(`http://localhost:3000/api/ordens/${id}`, getConfig())
+        await api.delete(`/api/ordens/${id}`, getConfig())
         adicionarToast("A ordem foi cancelada com sucesso.", "sucesso")
         await carregarDados()
     } catch (error) {

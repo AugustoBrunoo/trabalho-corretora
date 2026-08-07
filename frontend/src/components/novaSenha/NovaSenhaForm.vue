@@ -247,7 +247,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 
 const route = useRoute()
 const urlToken = route.query.token
@@ -264,7 +264,7 @@ const isLoading = ref(false)
 const errorMessage = ref('')
 const isSuccess = ref(false)
 
-const API_URL = 'http://localhost:3000/api/auth/reset'
+const API_URL = '/api/auth/reset'
 
 const regexLetra = /.*[a-zA-Z].*/
 const regexNumero = /.*[0-9].*/
@@ -308,7 +308,7 @@ const handleReset = async () => {
     isLoading.value = true
 
     try {
-        await axios.post(API_URL, {
+        await api.post(API_URL, {
             token: urlToken,
             email: urlEmail,
             senha: senha.value,

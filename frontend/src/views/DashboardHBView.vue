@@ -80,7 +80,7 @@
 <script setup>
 import { ref, reactive, computed, onMounted, nextTick, onUpdated } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import Navbar from '../components/dashboard/Navbar.vue'
 import CardPatrimonio from '../components/dashboard/CardPatrimonio.vue'
 import ListaAcoes from '../components/dashboard/ListaAcoes.vue'
@@ -112,8 +112,8 @@ const patrimonioInvestido = ref(0)
 const acoes = ref([])
 
 // ENDPOINTS
-const API_URL_RESUMO = 'http://localhost:3000/api/carteira'
-const API_BASE_CONTA = 'http://localhost:3000/api/conta'
+const API_URL_RESUMO = '/api/carteira'
+const API_BASE_CONTA = '/api/conta'
 
 const formatarMoeda = (valor) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
 
@@ -131,7 +131,7 @@ const mostrarToast = (mensagem, tipo = 'sucesso') => {
 
 const fetchDadosDashboard = async () => {
     try {
-        const response = await axios.get(API_URL_RESUMO, getConfig())
+        const response = await api.get(API_URL_RESUMO, getConfig())
         saldoConta.value = parseFloat(response.data.saldoDisponivel || 0)
         patrimonioInvestido.value = parseFloat(response.data.resumo.patrimonioAtivos || 0)
         acoes.value = response.data.ativos || []
@@ -155,7 +155,7 @@ const enviarTransacao = async () => {
     isProcessandoTransacao.value = true
     try {
         const url = `${API_BASE_CONTA}/${transacao.tipo}`
-        await axios.post(url, { valor: parseFloat(transacao.valor), descricao: transacao.descricao }, getConfig())
+        await api.post(url, { valor: parseFloat(transacao.valor), descricao: transacao.descricao }, getConfig())
         isTransacaoModalOpen.value = false
         mostrarToast('Operação realizada com sucesso!', 'sucesso')
         await fetchDadosDashboard()

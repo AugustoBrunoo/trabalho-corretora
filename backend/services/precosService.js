@@ -1,16 +1,14 @@
+let cacheUltimoMinuto = null;
+
 const obterPrecosPorMinuto = async (minutoRelatorio) => {
-    // Cria um controlador para conseguir abortar o fetch se ele demorar demais
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); 
-    
-    try {
-        const minuto = minutoRelatorio % 60;
-        const urlDoProfessor = `https://raw.githubusercontent.com/marciobarros/dsw-simulador-corretora/refs/heads/main/${minuto}.json`;
+    const minuto = Math.abs(minutoRelatorio) % 60; // Garante sempre um valor de 0 a 59
 
-        // Passamos o signal do controller para o fetch monitorar o tempo
+    try {
+        const urlDoProfessor = `https://raw.githubusercontent.com/marciobarros/dsw-simulador-corretora/refs/heads/main/${minuto}.json`;
         const resposta = await fetch(urlDoProfessor, { signal: controller.signal });
 
-        // Se chegou até aqui antes dos 3 segundos, cancelamos o cronômetro seguro
         clearTimeout(timeoutId);
 
         if (!resposta.ok) {
@@ -18,23 +16,30 @@ const obterPrecosPorMinuto = async (minutoRelatorio) => {
         }
 
         const dadosDasAcoes = await resposta.json();
+        
+        // Atualiza o cache em caso de sucesso
+        cacheUltimoMinuto = dadosDasAcoes;
         return dadosDasAcoes; 
 
     } catch (erro) {
-        clearTimeout(timeoutId); // Garante que o cronômetro seja limpo em caso de qualquer erro
+        clearTimeout(timeoutId);
 
-        // Verifica se o erro foi causado pelo nosso limite de tempo (Timeout)
         if (erro.name === 'AbortError') {
-            console.error(`🚨 [PrecosService] O GitHub demorou mais de 3 segundos para responder o minuto ${minutoRelatorio % 60}. Requisito cancelado.`);
-            throw new Error("A API de preços do professor está instável ou demorou demais para responder.");
+            console.error(`🚨 [PrecosService] Timeout no minuto ${minuto}.`);
+        } else {
+            console.error("Erro no PrecosService:", erro.message);
         }
 
-        console.error("Erro no PrecosService:", erro.message);
+        // Se houver dados em cache, entrega o cache para a aplicação não parar
+        if (cacheUltimoMinuto) {
+            console.log(`⚠️ [PrecosService] Usando dados em cache do último minuto válido.`);
+            return cacheUltimoMinuto;
+        }
+
         throw erro; 
     }
 };
 
-// Busca o preço de fechamento do dia anterior (tickers.json)
 const obterFechamentoDiario = async () => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000); 
@@ -52,10 +57,6 @@ const obterFechamentoDiario = async () => {
 
     } catch (erro) {
         clearTimeout(timeoutId);
-        if (erro.name === 'AbortError') {
-            console.error(` [PrecosService] Timeout ao buscar o arquivo tickers.json do professor.`);
-            throw new Error("A API de fechamento do professor demorou demais para responder.");
-        }
         console.error("Erro ao buscar fechamento no PrecosService:", erro.message);
         throw erro;
     }

@@ -70,6 +70,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import api from '@/services/api'
 import NavbarTopo from '../components/mercado/NavbarTopo.vue'
 import MenuLateral from '../components/mercado/MenuLateral.vue'
 import CardsEstatisticas from '../components/mercado/CardsEstatisticas.vue'
@@ -101,6 +102,7 @@ const nomeUsuario = ref(localStorage.getItem('usuario_nome') || 'Usuário')
 const saldoDisponivel = ref(0)
 const patrimonioInvestido = ref(0)
 const minutoAtual = ref(0)
+const horaAtual = ref(0)
 const acoesMercado = ref([])
 const tempoAvanco = ref('')
 
@@ -122,7 +124,7 @@ const getConfig = () => ({ headers: { Authorization: `Bearer ${localStorage.getI
 const formatarMoeda = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
 
 const relogioFormatado = computed(() => {
-    const d = new Date(); d.setHours(14, minutoAtual.value || 0, 0, 0);
+    const d = new Date(); d.setHours(horaAtual.value || 0, minutoAtual.value || 0, 0, 0);
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 })
 
@@ -144,15 +146,17 @@ const extrairArraySeguro = (dadosBack) => {
 const carregarMercado = async () => {
     isLoading.value = true
     try {
-        const [resCarteira, resTempo, resAcoes] = await Promise.all([
-            axios.get('http://localhost:3000/api/carteira', getConfig()),
-            axios.get('http://localhost:3000/api/mercado/tempo', getConfig()),
-            axios.get('http://localhost:3000/api/mercado/acoes', getConfig())
+        const resTempo = await api.get('/api/mercado/tempo', getConfig())
+        minutoAtual.value = resTempo.data.minutoAtual !== undefined ? resTempo.data.minutoAtual : (resTempo.data.tempo || 0)
+        horaAtual.value = resTempo.data.horaAtual !== undefined ? resTempo.data.horaAtual : 0
+
+        const [resCarteira, resAcoes] = await Promise.all([
+            api.get('/api/carteira', getConfig()),
+            api.get(`/api/mercado/acoes?minuto=${minutoAtual.value % 60}`, getConfig())
         ])
 
         saldoDisponivel.value = parseFloat(resCarteira.data.saldoDisponivel || 0)
         patrimonioInvestido.value = parseFloat(resCarteira.data.resumo?.patrimonioAtivos || 0)
-        minutoAtual.value = resTempo.data.minutoAtual !== undefined ? resTempo.data.minutoAtual : (resTempo.data.tempo || 0)
 
         const novasAcoes = extrairArraySeguro(resAcoes.data)
 
@@ -184,7 +188,7 @@ const abrirOffcanvasPesquisa = async () => {
 
     isLoadingCatalogo.value = true
     try {
-        const minUrl = minutoAtual.value || 0;
+        const minUrl = (minutoAtual.value || 0) % 60;
         const response = await axios.get(`https://raw.githubusercontent.com/marciobarros/dsw-simulador-corretora/refs/heads/main/${minUrl}.json`);
         const listaBruta = extrairArraySeguro(response.data);
 
@@ -204,18 +208,11 @@ const abrirOffcanvasPesquisa = async () => {
 }
 
 const avancarTempo = async (minutos) => {
-    const minutoInt = parseInt(minutoAtual.value) || 0;
-    if (minutoInt >= 59) {
-        isTempoOpen.value = false; tempoAvanco.value = '';
-        return adicionarToast("Mercado encerrado no minuto 59.", "erro")
-    }
-
     let avancoReal = parseInt(minutos)
-    if (minutoInt + avancoReal > 59) avancoReal = 59 - minutoInt
 
     isAvancandoTempo.value = true
     try {
-        await axios.post('http://localhost:3000/api/mercado/tempo', { minutos: avancoReal }, getConfig())
+        await api.post('/api/mercado/tempo', { minutos: avancoReal }, getConfig())
         adicionarToast(`Relógio avançado em ${avancoReal} minuto(s).`, "sucesso")
         catalogoAcoes.value = []
         await carregarMercado()
@@ -238,7 +235,7 @@ const abrirOffcanvasTempo = () => { tempoAvanco.value = ''; isTempoOpen.value = 
 
 const salvarNovaAcao = async (tickerSelecionado) => {
     try {
-        await axios.post('http://localhost:3000/api/mercado/acoes', { ticker: tickerSelecionado }, getConfig())
+        await api.post('/api/mercado/acoes', { ticker: tickerSelecionado }, getConfig())
         adicionarToast(`Ação ${tickerSelecionado} adicionada.`, "sucesso")
         isSearchOpen.value = false
         await carregarMercado()
@@ -248,7 +245,7 @@ const salvarNovaAcao = async (tickerSelecionado) => {
 const removerAcao = async (ticker) => {
     if (!confirm(`Parar de acompanhar ${ticker} no painel?`)) return
     try {
-        await axios.delete(`http://localhost:3000/api/mercado/acoes/${ticker}`, getConfig())
+        await api.delete(`/api/mercado/acoes/${ticker}`, getConfig())
         adicionarToast(`${ticker} removida.`, "sucesso")
         await carregarMercado()
     } catch (error) { adicionarToast(error.response?.data?.message || "Erro ao remover.", "erro") }
@@ -268,7 +265,7 @@ const enviarOrdem = async () => {
 
     isEnviandoOrdem.value = true
     try {
-        await axios.post('http://localhost:3000/api/ordens', {
+        await api.post('/api/ordens', {
             ticker: ordemForm.ticker, tipoOrdem: ordemForm.tipoOperacao, tipoExecucao: ordemForm.tipoExecucao,
             quantidade: parseInt(ordemForm.quantidade),
             precoReferencia: ordemForm.tipoExecucao === 'condicional' ? parseFloat(ordemForm.precoReferencia) : null

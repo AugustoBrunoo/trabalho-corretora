@@ -21,7 +21,7 @@ const consultarCarteira = async (req, res) => {
         }
 
         // busca o minuto atual global
-        const minutoAtual = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual } = await mercadoService.obterTempoGlobal();
         
         // Pega as ações que o utilizador possui guardadas no MongoDB
         const ativos = await Carteira.find({ usuario: userId });

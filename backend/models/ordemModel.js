@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 const ordemSchema = new mongoose.Schema({
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario', required: true },
     minutoRegistro: { type: Number, required: true },
+    horaRegistro: { type: Number, default: 0 },
     minutoExecucao: { type: Number, default: null },
+    horaExecucao: { type: Number, default: null },
     tipoOrdem: { type: String, enum: ['compra', 'venda'], required: true },
     ticker: { type: String, required: true, uppercase: true },
     quantidade: { type: Number, required: true },

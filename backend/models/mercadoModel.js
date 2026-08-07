@@ -4,6 +4,10 @@ const MercadoSchema = new mongoose.Schema({
     minutoAtual: {
         type: Number,
         default: 0
+    },
+    horaAtual: {
+        type: Number,
+        default: 0
     }
 });
 

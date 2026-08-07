@@ -30,7 +30,7 @@ const processarOrdem = async (req, res) => {
         }
 
         // busca o tempo global
-        const minutoAtual = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual, horaAtual } = await mercadoService.obterTempoGlobal();
 
         // LÓGICA PARA ORDENS DE MERCADO
         if (tipoExecucao === 'mercado') {
@@ -66,6 +66,7 @@ const processarOrdem = async (req, res) => {
                     tipo: "retirada",
                     valor: valorTotalCalculado,
                     minutoSimulacao: minutoAtual,
+                    horaSimulacao: horaAtual,
                     saldoResultante: usuario.saldoGeral,
                     descricao: `Compra a mercado de ${quantidade} ações de ${ticker.toUpperCase()}`
                 });
@@ -91,7 +92,7 @@ const processarOrdem = async (req, res) => {
                 
                 // Salva o registro da Ordem Executada no banco
                 const ordemSalva = await Ordem.create({
-                    usuario: userId, minutoRegistro: minutoAtual, minutoExecucao: minutoAtual,
+                    usuario: userId, minutoRegistro: minutoAtual, horaRegistro: horaAtual, minutoExecucao: minutoAtual, horaExecucao: horaAtual,
                     tipoOrdem: 'compra', ticker: ticker.toUpperCase(), quantidade, tipoExecucao,
                     precoReferencia: precoAtual, status: 'executada'
                 });
@@ -117,6 +118,7 @@ const processarOrdem = async (req, res) => {
                     tipo: "deposito",
                     valor: valorTotalCalculado,
                     minutoSimulacao: minutoAtual,
+                    horaSimulacao: horaAtual,
                     saldoResultante: usuario.saldoGeral,
                     descricao: `Venda a mercado de ${quantidade} ações de ${ticker.toUpperCase()}`
                 });
@@ -131,7 +133,7 @@ const processarOrdem = async (req, res) => {
 
                 // Salva o registro da Ordem Executada no banco
                 const ordemSalva = await Ordem.create({
-                    usuario: userId, minutoRegistro: minutoAtual, minutoExecucao: minutoAtual,
+                    usuario: userId, minutoRegistro: minutoAtual, horaRegistro: horaAtual, minutoExecucao: minutoAtual, horaExecucao: horaAtual,
                     tipoOrdem: 'venda', ticker: ticker.toUpperCase(), quantidade, tipoExecucao,
                     precoReferencia: precoAtual, status: 'executada'
                 });
@@ -166,6 +168,7 @@ const processarOrdem = async (req, res) => {
             const ordemSalva = await Ordem.create({
                 usuario: userId, 
                 minutoRegistro: minutoAtual,
+                horaRegistro: horaAtual,
                 tipoOrdem, 
                 ticker: ticker.toUpperCase(), 
                 quantidade, 
@@ -210,11 +213,11 @@ const cancelarOrdemCondicional = async (req, res) => {
         const { id } = req.params;
 
         // Mantemos a declaração original da sua equipe
-        const minutoGlobal = await mercadoService.obterMinutoGlobal();
+        const { minutoAtual: minutoGlobal, horaAtual: horaGlobal } = await mercadoService.obterTempoGlobal();
 
         const ordemCancelada = await Ordem.findOneAndUpdate(
             { _id: id, usuario: claims.user_id, status: 'pendente' },
-            { status: 'cancelada', minutoExecucao: minutoGlobal }, 
+            { status: 'cancelada', minutoExecucao: minutoGlobal, horaExecucao: horaGlobal }, 
             { new: true }
         );
         

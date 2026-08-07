@@ -55,7 +55,7 @@
 <script setup>
 import { ref, onMounted, nextTick, onUpdated } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/services/api'
 import ContaCorrenteNavbar from '../components/contaCorrente/ContaCorrenteNavbar.vue'
 import ContaCorrenteSidebar from '../components/contaCorrente/ContaCorrenteSidebar.vue'
 import ContaCorrenteBalance from '../components/contaCorrente/ContaCorrenteBalance.vue'
@@ -79,7 +79,7 @@ const transacoes = ref([])
 const toasts = ref([])
 let toastIdCounter = 0
 
-const API_BASE = 'http://localhost:3000/api/conta'
+const API_BASE = '/api/conta'
 
 // Função centralizada para remover o item da lista
 const removerToast = (id) => {
@@ -106,7 +106,7 @@ const getConfig = () => {
 const fetchTransacoes = async () => {
     isLoading.value = true
     try {
-        const { data } = await axios.get(`${API_BASE}/transacoes`, getConfig())
+        const { data } = await api.get(`${API_BASE}/transacoes`, getConfig())
         saldoAtual.value = parseFloat(data.saldoAtual || 0)
         minutoAtual.value = data.minutoAtual || 0
         transacoes.value = data.transacoes.reverse() || []
@@ -132,7 +132,7 @@ const enviarTransacao = async ({ valor, descricao }) => {
     isProcessandoTransacao.value = true
     try {
         const url = `${API_BASE}/${tipoTransacaoSelecionada.value}`
-        await axios.post(url, { valor: parseFloat(valor), descricao }, getConfig())
+        await api.post(url, { valor: parseFloat(valor), descricao }, getConfig())
         isTransacaoModalOpen.value = false
         mostrarToast(`Operação realizada com sucesso!`, 'sucesso')
         await fetchTransacoes()
@@ -177,7 +177,7 @@ const gerarPDFExtrato = () => {
         const isDep = t.tipo === 'deposito'
         html += `
             <tr style="border-bottom: 1px solid #E2E8F0;">
-                <td style="padding: 12px 10px; font-size: 12px;">${new Date(t.createdAt).toLocaleDateString('pt-BR')} (Min: ${t.minutoSimulacao}m)</td>
+                <td style="padding: 12px 10px; font-size: 12px;">${new Date(t.createdAt).toLocaleDateString('pt-BR')} (Simulação: ${String(t.horaSimulacao || 0).padStart(2, '0')}:${String(t.minutoSimulacao || 0).padStart(2, '0')})</td>
                 <td style="padding: 12px 10px; font-size: 12px;">${t.descricao}</td>
                 <td style="padding: 12px 10px; font-size: 13px; color: ${isDep ? '#059669' : '#DC2626'}; text-align: right; font-weight: bold;">${isDep ? '+' : '-'} ${formatarMoeda(t.valor)}</td>
             </tr>

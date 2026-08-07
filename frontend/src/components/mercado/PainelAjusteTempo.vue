@@ -12,7 +12,7 @@
                 </button>
             </div>
             <div class="p-6 flex-1 overflow-y-auto">
-                <p class="text-sm text-slate-400 mb-6">O mercado simulado encerra no minuto 59.</p>
+                <p class="text-sm text-slate-400 mb-6">O mercado opera continuamente.</p>
                 <div class="bg-[#151E2E] border border-slate-800 rounded-lg p-4 mb-6 flex justify-between items-center shadow-inner">
                     <span class="text-sm font-medium text-slate-400">Minuto Atual:</span>
                     <span class="text-2xl font-bold text-white font-mono">{{ minutoAtual }}</span>
@@ -21,7 +21,7 @@
                     <label class="block text-xs font-medium text-slate-300 mb-2">Minutos a avançar</label>
                     <div class="relative input-fintech rounded-lg flex items-center shadow-sm">
                         <div class="pl-4 text-slate-500"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="13 19 22 12 13 5 13 19" /><polygon points="2 19 11 12 2 5 2 19" /></svg></div>
-                        <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" type="number" min="1" max="59" class="w-full bg-transparent border-none text-white px-3 py-3.5 focus:outline-none text-sm" placeholder="Ex: 5">
+                        <input :value="modelValue" @input="$emit('update:modelValue', $event.target.value)" type="number" min="1" class="w-full bg-transparent border-none text-white px-3 py-3.5 focus:outline-none text-sm" placeholder="Ex: 5">
                     </div>
                 </div>
                 <button @click="$emit('processar')" :disabled="isAvancando" class="w-full py-3.5 rounded-lg bg-prime-500 text-slate-900 font-bold hover:bg-prime-400 transition-colors shadow-lg disabled:opacity-50 flex justify-center items-center gap-2">
