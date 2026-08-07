@@ -47,7 +47,7 @@
 </template>
 
 <script setup>
-import { reactive, onMounted, onUpdated, nextTick } from 'vue'
+import { reactive, onMounted, watch, nextTick } from 'vue'
 
 const props = defineProps({
   tipo: { type: String, required: true },
@@ -69,8 +69,11 @@ const updateIcons = () => {
   nextTick(() => { if (window.lucide) window.lucide.createIcons() })
 }
 
+watch(() => props.isProcessando, () => {
+  updateIcons()
+})
+
 onMounted(updateIcons)
-onUpdated(updateIcons)
 </script>
 
 <style scoped>

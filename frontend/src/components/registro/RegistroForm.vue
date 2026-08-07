@@ -328,11 +328,7 @@ onMounted(() => {
     })
 })
 
-onUpdated(() => {
-    nextTick(() => {
-        renderIcons()
-    })
-})
+// onUpdated removido
 </script>
 
 <style scoped>

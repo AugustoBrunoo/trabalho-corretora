@@ -125,6 +125,7 @@ const abrirModalTransacao = (tipo) => {
 }
 
 const enviarTransacao = async ({ valor, descricao }) => {
+    if (isProcessandoTransacao.value) return;
     if (valor <= 0) return mostrarToast("O valor deve ser maior que zero.", "erro")
     if (tipoTransacaoSelecionada.value === 'retirada' && valor > saldoAtual.value) return mostrarToast("Saldo insuficiente.", "erro")
 
@@ -207,7 +208,7 @@ onMounted(() => {
     }
 })
 
-onUpdated(() => { nextTick(() => { if (window.lucide) window.lucide.createIcons() }) })
+// onUpdated removido para evitar loop de renderização infinita
 </script>
 
 <style scoped>

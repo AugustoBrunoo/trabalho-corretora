@@ -82,7 +82,7 @@ const updateIcons = () => {
 }
 
 onMounted(updateIcons)
-onUpdated(updateIcons)
+// onUpdated(updateIcons) removido
 </script>
 
 <style scoped>
