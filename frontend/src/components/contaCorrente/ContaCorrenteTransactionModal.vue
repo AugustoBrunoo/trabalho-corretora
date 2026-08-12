@@ -3,12 +3,13 @@
     <div class="bg-[#0F172A] border border-slate-700 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden animate-fade-in-up">
       <div :class="['p-5 border-b border-slate-800 flex justify-between items-center', tipo === 'deposito' ? 'bg-emerald-900/20 border-l-4 border-l-emerald-500' : 'bg-slate-800/50 border-l-4 border-l-slate-400']">
         <h3 class="text-lg font-bold text-white flex items-center gap-2">
-          <i :data-lucide="tipo === 'deposito' ? 'arrow-down-to-line' : 'arrow-up-from-line'"
-            :class="tipo === 'deposito' ? 'text-emerald-400' : 'text-slate-300'" class="w-5 h-5"></i>
+          <span :class="tipo === 'deposito' ? 'text-emerald-400' : 'text-slate-300'">
+            <i :data-lucide="tipo === 'deposito' ? 'arrow-down-to-line' : 'arrow-up-from-line'" class="w-5 h-5"></i>
+          </span>
           {{ tipo === 'deposito' ? 'Fazer Depósito' : 'Fazer Retirada' }}
         </h3>
         <button @click="$emit('close')" class="text-slate-400 hover:text-white transition-colors">
-          <i data-lucide="x" class="w-5 h-5"></i>
+          <span><i data-lucide="x" class="w-5 h-5"></i></span>
         </button>
       </div>
 
@@ -35,8 +36,8 @@
             <button type="submit" :disabled="isProcessando"
               :class="['w-full py-3.5 rounded-xl font-bold transition-colors shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed',
                 tipo === 'deposito' ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20' : 'bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white']">
-              <i v-if="isProcessando" data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
-              <i v-else data-lucide="check" class="w-4 h-4"></i>
+              <span v-if="isProcessando"><i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i></span>
+              <span v-else><i data-lucide="check" class="w-4 h-4"></i></span>
               {{ isProcessando ? 'Processando...' : (tipo === 'deposito' ? 'Confirmar Depósito' : 'Confirmar Retirada') }}
             </button>
           </div>

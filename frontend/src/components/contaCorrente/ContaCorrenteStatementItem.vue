@@ -3,7 +3,7 @@
     <div class="flex items-start sm:items-center gap-4">
       <div :class="['w-10 h-10 rounded-full border flex items-center justify-center flex-shrink-0',
         transacao.tipo === 'deposito' ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-red-500 bg-red-500/10 border-red-500/20']">
-        <i :data-lucide="transacao.tipo === 'deposito' ? 'arrow-down-left' : 'arrow-up-right'" class="w-5 h-5"></i>
+        <span><i :data-lucide="transacao.tipo === 'deposito' ? 'arrow-down-left' : 'arrow-up-right'" class="w-5 h-5"></i></span>
       </div>
       <div>
         <p class="font-semibold text-white text-sm sm:text-base leading-tight mb-1">{{ transacao.descricao }}</p>

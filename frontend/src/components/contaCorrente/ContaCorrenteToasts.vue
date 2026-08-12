@@ -5,10 +5,9 @@
         toast.tipo === 'erro' ? 'border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.15)]' :
         toast.tipo === 'info' ? 'border-blue-500/30 shadow-[0_0_20px_rgba(59,130,246,0.15)]' :
         'border-emerald-500/30 shadow-[0_0_20px_rgba(16,185,129,0.15)]']">
-        
-        <i v-if="toast.tipo === 'erro'" data-lucide="x-circle" class="w-5 h-5 text-red-500 flex-shrink-0"></i>
-        <i v-else-if="toast.tipo === 'info'" data-lucide="info" class="w-5 h-5 text-blue-500 flex-shrink-0"></i>
-        <i v-else data-lucide="check-circle" class="w-5 h-5 text-emerald-500 flex-shrink-0"></i>
+        <span v-if="toast.tipo === 'erro'"><i data-lucide="x-circle" class="w-5 h-5 text-red-500 flex-shrink-0"></i></span>
+        <span v-else-if="toast.tipo === 'info'"><i data-lucide="info" class="w-5 h-5 text-blue-500 flex-shrink-0"></i></span>
+        <span v-else><i data-lucide="check-circle" class="w-5 h-5 text-emerald-500 flex-shrink-0"></i></span>
         
         <p class="text-sm font-medium text-white pr-2 flex-grow">{{ toast.mensagem }}</p>
         
@@ -17,7 +16,7 @@
           class="text-slate-400 hover:text-white transition-colors p-1 rounded-md hover:bg-white/10 flex items-center justify-center focus:outline-none flex-shrink-0"
           title="Fechar"
         >
-          <i data-lucide="x" class="w-4 h-4"></i>
+          <span><i data-lucide="x" class="w-4 h-4"></i></span>
         </button>
       </div>
     </transition-group>
